@@ -1,0 +1,51 @@
+server:
+  port: ${ailove.port} # 服务端口
+spring:
+  application:
+    name: AILoveBacked
+  profiles:
+    active: dev # 激活的环境
+  datasource:
+    url: jdbc:mysql://${ailove.datasource.host}:${ailove.datasource.port}/${ailove.datasource.database}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai
+    username: ${ailove.datasource.username}
+    password: ${ailove.datasource.password}
+    driver-class-name: ${ailove.datasource.driver-class-name}
+  data:
+    redis:
+      host: ${ailove.data.redis.host}
+      port: ${ailove.data.redis.port}
+      database: ${ailove.data.redis.database}
+
+mybatis:
+  mapper-locations: classpath:mapper/*.xml
+  type-aliases-package: com.ablecisi.ailovebacked.pojo.entity
+  configuration:
+    map-underscore-to-camel-case: true
+
+logging:
+  level:
+    root: info
+    com.ailove.backend: debug
+
+aliyun:
+  oss:
+    endpoint: ${ailove.aliyun.oss.endpoint} # oss地址
+    accessKeyId: ${ailove.aliyun.oss.accessKeyId} # oss id
+    accessKeySecret: ${ailove.aliyun.oss.accessKeySecret} # oss密钥
+    bucketName: ${ailove.aliyun.oss.bucketName} # oss存储名
+    folderName: ${ailove.aliyun.oss.folderName} # oss存储的文件夹名
+
+ailove:
+  jwt:
+    user-secret-key: ${sky.jwt.user-secret-key} # 用户秘钥
+    user-token-name: ${sky.jwt.user-token-name} # 用户令牌名称
+    user-ttl: ${sky.jwt.user-ttl} # 用户过期时间
+
+ml: # 机器学习配置
+  bert:
+    url: ${ailove.ml.bert.url} # 你本地 Flask 接口
+llm: # 大语言模型配置
+  provider: ${ailove.llm.provider} # 大语言模型提供商
+  apiKey: ${ailove.llm.apiKey} # API 密钥
+  endpoint: ${ailove.llm.endpoint} # API 端点
+

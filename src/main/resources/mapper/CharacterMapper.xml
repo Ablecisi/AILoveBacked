@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--
+  创建时间：2025/6/15 19:34
+  作者：Ablecisi
+-->
+<mapper namespace="com.ablecisi.ailovebacked.mapper.CharacterMapper">
+    <resultMap id="AiCharacterResultMap" type="com.ablecisi.ailovebacked.pojo.entity.AiCharacter">
+        <result property="personalityTraits" column="personality_traits"
+                typeHandler="com.ablecisi.ailovebacked.handler.JsonStringListTypeHandler"/>
+        <result property="interests" column="interests"
+                typeHandler="com.ablecisi.ailovebacked.handler.JsonStringListTypeHandler"/>
+        <!-- 其他字段可省略，MyBatis 会自动映射 -->
+    </resultMap>
+    <select id="getHotCharacters" resultMap="AiCharacterResultMap">
+        SELECT c.*
+        FROM ailove.Character c
+                 JOIN (SELECT character_id, COUNT(*) AS cnt
+                       FROM ailove.conversation
+                       GROUP BY character_id
+                       ORDER BY cnt DESC
+                       LIMIT 5) t ON c.id = t.character_id
+        ORDER BY t.cnt DESC
+    </select>
+    <select id="getCharacterById" resultMap="AiCharacterResultMap">
+        SELECT *
+        FROM ailove.Character
+        WHERE id = #{characterId}
+    </select>
+</mapper>
