@@ -30,10 +30,16 @@ public class Comment implements Serializable {
 
     private Long id; // 评论ID
     private String content; // 评论内容
-    private String userId; // 评论用户ID
     private Long postId; // 评论所属的帖子ID
     private Long articleId; // 评论所属的文章ID
+    private String userId; // 评论用户ID
+    private Integer likeCount; // 点赞数
+    private Integer replyCount; // 直接回复数
     private Long parentId; // 父评论ID，如果是回复评论的话
+    private Long rootId; // 根评论ID，用于标识评论树的根节点
+    private String path; // 评论路径，用于表示评论的层级关系
+    private Integer depth; // 评论层级，表示评论的深度
+    private Boolean isDeleted; // 是否删除
     private LocalDateTime createTime; // 创建时间
     private LocalDateTime updateTime; // 更新时间
 }

@@ -34,8 +34,8 @@ public class Post implements Serializable {
     private String content; // 帖子内容
     private List<String> imageUrls; // 帖子图片URL列表
     private List<String> tags; // 帖子标签列表
-    private Integer shareCount; // 分享数
     private Integer likeCount; // 点赞数
+    private Integer shareCount; // 分享数
     private LocalDateTime createTime; // 创建时间
     private LocalDateTime updateTime; // 更新时间
 }

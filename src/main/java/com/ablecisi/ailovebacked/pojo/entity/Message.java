@@ -29,11 +29,13 @@ public class Message implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private Long id; // 消息ID
-    private String content; // 消息内容
-    private Integer type; // 0: 发送, 1: 接收
-    private Short isRead; // 是否已读 0: 未读, 1: 已读
-    private Long userId; // 用户ID，表示消息所属的用户
     private Long conversationId; // 会话ID，表示消息所属的会话
+    private Long userId; // 用户ID，表示消息所属的用户
+    private Integer type; // 0: 发送, 1: 接收
+    private String content; // 消息内容
+    private String emotion; // 情感标签，表示消息的情感倾向，如喜悦、悲伤等
+    private Double confidence; // 情感置信度，表示情感分析的置信度
+    private Short isRead; // 是否已读 0: 未读, 1: 已读
     private LocalDateTime createTime; // 创建时间
     private LocalDateTime updateTime; // 更新时间
 }
