@@ -5,6 +5,8 @@ import com.ablecisi.ailovebacked.pojo.dto.UserDTO;
 import com.ablecisi.ailovebacked.pojo.dto.UserFollowDTO;
 import com.ablecisi.ailovebacked.pojo.vo.UserVO;
 
+import java.util.List;
+
 /**
  * AILoveBacked <br>
  * com.ablecisi.ailovebacked.service <br>
@@ -39,4 +41,12 @@ public interface UserService {
      * @return 用户名
      */
     Boolean isFollowing(Long userId, Long authorId);
+
+    /**
+     * 根据用户ID获取用户兴趣标签
+     *
+     * @param userId 用户ID
+     * @return 用户兴趣标签列表
+     */
+    List<String> getUserInterests(Long userId);
 }

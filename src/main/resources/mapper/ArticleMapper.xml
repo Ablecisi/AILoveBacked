@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--
+  创建时间：2025/8/22 22:58
+  作者：Ablecisi
+-->
+<mapper namespace="com.ablecisi.ailovebacked.mapper.ArticleMapper">
+
+    <resultMap id="ArticleResultMap" type="com.ablecisi.ailovebacked.pojo.entity.Article">
+        <id column="id" property="id"/>
+        <result column="title" property="title"/>
+        <result column="description" property="description"/>
+        <result column="content" property="content"/>
+        <result column="cover_image_url" property="coverImageUrl"/>
+        <result column="user_id" property="userId"/>
+        <result column="view_count" property="viewCount"/>
+        <result column="like_count" property="likeCount"/>
+        <result column="comment_count" property="commentCount"/>
+        <result column="tags" property="tags"
+                typeHandler="com.ablecisi.ailovebacked.handler.JsonStringListTypeHandler"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <select id="selectById" resultMap="ArticleResultMap">
+        SELECT *
+        FROM article
+        WHERE id = #{articleId}
+    </select>
+    <select id="selectRelatedArticlesByTags" resultMap="ArticleResultMap">
+        SELECT *
+        FROM article
+        WHERE id != #{articleId}
+        AND JSON_OVERLAPS(tags, JSON_ARRAY(
+        <foreach collection="tags" item="tag" separator=','>
+            #{tag}
+        </foreach>
+        ))
+        ORDER BY update_time DESC
+        LIMIT 10
+    </select>
+    <select id="selectHotArticles" resultMap="ArticleResultMap">
+        SELECT *
+        FROM article
+        ORDER BY view_count AND comment_count * 3 AND like_count * 5 DESC
+        LIMIT 10
+    </select>
+</mapper>

@@ -21,11 +21,12 @@ mybatis:
   type-aliases-package: com.ablecisi.ailovebacked.pojo.entity
   configuration:
     map-underscore-to-camel-case: true
+  type-handlers-package: com.ablecisi.ailovebacked.config.mybatis.handler
 
 logging:
   level:
     root: info
-    com.ailove.backend: debug
+    com.ablecisi.ailovebacked: debug
 
 aliyun:
   oss:

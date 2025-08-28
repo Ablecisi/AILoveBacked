@@ -10,6 +10,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 /**
  * AILoveBacked
  * com.ablecisi.ailovebacked.controller
@@ -91,6 +93,27 @@ public class UserController {
             return Result.success("查询成功", isFollowing);
         } else {
             return Result.error("查询失败，可能是用户或作者不存在");
+        }
+    }
+
+    /**
+     * 获取用户兴趣标签
+     *
+     * @param userId 用户ID
+     * @return 兴趣标签列表
+     */
+    @GetMapping("/interests")
+    public Result<List<String>> getUserInterests(String userId) {
+        log.info("获取用户 {} 的兴趣标签", userId);
+        if (userId == null) {
+            log.warn("用户ID不能为空");
+            return Result.error("用户ID不能为空");
+        }
+        List<String> interests = userService.getUserInterests(Long.parseLong(userId));
+        if (interests != null) {
+            return Result.success("获取成功", interests);
+        } else {
+            return Result.error("获取失败，可能是用户不存在");
         }
     }
 }

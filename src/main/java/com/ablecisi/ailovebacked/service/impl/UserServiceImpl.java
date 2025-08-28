@@ -4,15 +4,14 @@ import com.ablecisi.ailovebacked.constant.FollowMessageConstant;
 import com.ablecisi.ailovebacked.constant.JwtClaimsConstant;
 import com.ablecisi.ailovebacked.context.BaseContext;
 import com.ablecisi.ailovebacked.exception.BaseException;
-import com.ablecisi.ailovebacked.mapper.PostMapping;
 import com.ablecisi.ailovebacked.mapper.UserMapper;
 import com.ablecisi.ailovebacked.pojo.dto.UserDTO;
 import com.ablecisi.ailovebacked.pojo.dto.UserFollowDTO;
-import com.ablecisi.ailovebacked.pojo.entity.Post;
 import com.ablecisi.ailovebacked.pojo.entity.User;
 import com.ablecisi.ailovebacked.pojo.vo.UserVO;
 import com.ablecisi.ailovebacked.properties.JwtProperties;
 import com.ablecisi.ailovebacked.service.UserService;
+import com.ablecisi.ailovebacked.utils.JsonUtil;
 import com.ablecisi.ailovebacked.utils.JwtUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,13 +36,11 @@ import java.util.Map;
 @Service
 public class UserServiceImpl implements UserService {
     private final UserMapper userMapper;
-    private final PostMapping postMapping;
     private final JwtProperties jwtProperties;
 
     @Autowired
-    public UserServiceImpl(UserMapper userMapper, PostMapping postMapping, JwtProperties jwtProperties) {
+    public UserServiceImpl(UserMapper userMapper, JwtProperties jwtProperties) {
         this.userMapper = userMapper;
-        this.postMapping = postMapping;
         this.jwtProperties = jwtProperties;
     }
 
@@ -70,12 +67,6 @@ public class UserServiceImpl implements UserService {
                 claims);
         log.info("用户 {} 登录成功，生成的token: {}", user.getUsername(), token);
 
-        List<Post> posts = postMapping.getPostsByUserId(user.getId());
-        List<Long> postIds = posts.stream().map(Post::getId).toList();
-
-        // 获取用户创建的ai角色ID列表
-        List<Long> characterIds = userMapper.getCharacterIdsByUserId(user.getId());
-
         // 创建用户视图对象
         return UserVO.builder()
                 .id(String.valueOf(user.getId()))
@@ -85,9 +76,9 @@ public class UserServiceImpl implements UserService {
                 .followersCount(user.getFollowersCount())
                 .followingCount(user.getFollowingCount())
                 .token(token) // 使用JWT生成
-                .postIds(postIds)
+                .postIds(List.of())
                 .isFollowed(false) // 登录时不需要关注状态
-                .characterIds(characterIds)
+                .characterIds(List.of())
                 .build();
     }
 
@@ -142,5 +133,18 @@ public class UserServiceImpl implements UserService {
             return false; // 用户ID或作者ID不能为空
         }
         return userMapper.selectFollowRelation(userId, authorId);
+    }
+
+    /**
+     * 根据用户ID获取用户兴趣标签
+     *
+     * @param userId 用户ID
+     * @return 用户兴趣标签列表
+     */
+    @Override
+    public List<String> getUserInterests(Long userId) {
+        List<String> interests = JsonUtil.fromJsonList(userMapper.getUserInterests(userId), String.class);
+        System.out.println(interests);
+        return interests;
     }
 }

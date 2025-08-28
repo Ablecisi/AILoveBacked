@@ -4,8 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.ibatis.type.BaseTypeHandler;
 import org.apache.ibatis.type.JdbcType;
-import org.apache.ibatis.type.MappedJdbcTypes;
-import org.apache.ibatis.type.MappedTypes;
+import org.springframework.stereotype.Component;
 
 import java.sql.CallableStatement;
 import java.sql.PreparedStatement;
@@ -24,10 +23,9 @@ import java.util.List;
  * 星期一
  * 10:21
  **/
-@MappedTypes(List.class)
-@MappedJdbcTypes(JdbcType.VARCHAR)
+@Component
 public class JsonStringListTypeHandler extends BaseTypeHandler<List<String>> {
-    private static final ObjectMapper objectMapper = new ObjectMapper();
+    private static final ObjectMapper objectMapper = new ObjectMapper(); // Jackson对象映射器
 
     /**
      * 将字符串列表转换为JSON字符串

@@ -80,4 +80,12 @@ public interface UserMapper {
      * @return 是否更新成功
      */
     Boolean updateUser(User user);
+
+    /**
+     * 根据用户ID获取用户兴趣标签
+     *
+     * @param userId 用户ID
+     * @return 用户兴趣标签列表
+     */
+    String getUserInterests(Long userId);
 }

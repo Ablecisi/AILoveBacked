@@ -30,4 +30,9 @@
         SELECT * FROM user
         WHERE username = #{username}
     </select>
+    <select id="getUserInterests" resultType="java.lang.String">
+        SELECT interests
+        FROM user_profile
+        WHERE user_id = #{userId}
+    </select>
 </mapper>

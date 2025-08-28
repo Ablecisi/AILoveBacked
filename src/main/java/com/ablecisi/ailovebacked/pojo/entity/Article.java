@@ -36,7 +36,8 @@ public class Article implements Serializable {
     private String coverImageUrl; // 封面图片URL
     private Long userId; // 作者ID
     private Integer viewCount; // 浏览量 int--> 最大值为2,147,483,647
-    private Integer likeCount; // 点赞数
+    private Integer likeCount; // 点赞数 热度计算： 点赞数 * 5 + 评论数 * 3 + 浏览量 * 1
+    private Integer commentCount; // 评论数
     private List<String> tags; // 文章标签列表
     private LocalDateTime createTime; // 创建时间
     private LocalDateTime updateTime; // 更新时间
