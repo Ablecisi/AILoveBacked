@@ -21,7 +21,7 @@ import java.util.List;
  * 22:57
  **/
 @RestController
-@RequestMapping("/article")
+@RequestMapping("/api/article")
 @Slf4j
 public class ArticleController {
     private final ArticleService articleService;

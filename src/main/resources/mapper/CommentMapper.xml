@@ -1,0 +1,295 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ablecisi.ailovebacked.mapper.CommentMapper">
+
+    <!-- ===== 基础映射：Entity ===== -->
+    <resultMap id="CommentMap" type="com.ablecisi.ailovebacked.pojo.entity.Comment">
+        <id column="id" property="id"/>
+        <result column="content" property="content"/>
+        <result column="post_id" property="postId"/>
+        <result column="article_id" property="articleId"/>
+        <result column="user_id" property="userId"/>
+        <result column="parent_id" property="parentId"/>
+        <result column="root_id" property="rootId"/>
+        <result column="path" property="path"/>
+        <result column="depth" property="depth"/>
+        <result column="like_count" property="likeCount"/>
+        <result column="reply_count" property="replyCount"/>
+        <result column="is_deleted" property="isDeleted"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <!-- ===== VO 映射（含 JOIN user）===== -->
+    <resultMap id="CommentVOMap" type="com.ablecisi.ailovebacked.pojo.vo.CommentVO">
+        <id column="id" property="id"/>
+        <result column="content_out" property="content"/>
+        <result column="user_id" property="userId"/>
+        <result column="user_name" property="userName"/>
+        <result column="avatar_url" property="avatarUrl"/>
+        <result column="parent_id" property="parentId"/>
+        <result column="root_id" property="rootId"/>
+        <result column="depth" property="depth"/>
+        <result column="like_count" property="likeCount"/>
+        <result column="reply_count" property="replyCount"/>
+        <result column="deleted" property="deleted"/>
+        <result column="create_time" property="createTime"/>
+        <!-- ★ 新增 -->
+        <result column="path_cursor" property="pathCursor"/>
+    </resultMap>
+
+    <!-- ===== 写入/回填树 ===== -->
+    <insert id="insertBase" parameterType="Comment" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO comment (content, post_id, article_id, user_id, parent_id, create_time, update_time)
+        VALUES (#{content}, #{postId}, #{articleId}, #{userId}, #{parentId}, NOW(), NOW())
+    </insert>
+
+    <update id="fillTreeForRoot">
+        UPDATE comment
+        SET root_id = #{id},
+            path    = LPAD(#{id}, 6, '0'),
+            depth   = 0
+        WHERE id = #{id}
+    </update>
+
+    <update id="fillTreeForChild">
+        UPDATE comment
+        SET root_id = #{rootId},
+            path    = #{path},
+            depth   = #{depth}
+        WHERE id = #{id}
+    </update>
+
+    <select id="selectTreeByIdForUpdate" resultMap="CommentMap">
+        SELECT id, root_id, path, depth
+        FROM comment
+        WHERE id = #{id}
+            FOR
+        UPDATE # for update 表示锁行，防止并发插入子评论时 path 冲突
+    </select>
+
+    <select id="selectById" resultMap="CommentMap">
+        SELECT *
+        FROM comment
+        WHERE id = #{id}
+    </select>
+
+    <update id="incReplyCount">
+        UPDATE comment
+        SET reply_count = reply_count + 1
+        WHERE id = #{id}
+    </update>
+
+    <update id="decReplyCount">
+        UPDATE comment
+        SET reply_count = GREATEST(reply_count - 1, 0)
+        WHERE id = #{id}
+    </update>
+
+    <!-- ===== 查询（顶层）- 文章 ===== -->
+    <select id="pageTopByArticle" resultMap="CommentVOMap">
+        SELECT
+        c.id,
+        CASE WHEN c.is_deleted=1 THEN '该评论已删除' ELSE c.content END AS content_out,
+        c.user_id,
+        u.name AS user_name,
+        u.avatar_url AS avatar_url,
+        c.parent_id, c.root_id, c.depth,
+        c.like_count, c.reply_count,
+        (c.is_deleted=1) AS deleted,
+        c.create_time,
+        c.path AS path_cursor      <!-- ★ 新增 -->
+        FROM comment c
+        LEFT JOIN user u ON u.id = c.user_id
+        WHERE c.article_id = #{articleId}
+        AND c.parent_id IS NULL
+        <choose>
+            <when test="sort != null and sort == 'hot'">
+                ORDER BY (c.reply_count * 2 + c.like_count) DESC, c.create_time DESC
+            </when>
+            <otherwise>
+                ORDER BY c.create_time DESC
+            </otherwise>
+        </choose>
+        LIMIT #{size} OFFSET #{offset} # offset 用于分页, 例如 size=10, offset=0 表示第一页
+    </select>
+
+    <select id="countTopByArticle" resultType="long">
+        SELECT COUNT(1)
+        FROM comment c
+        WHERE c.article_id = #{articleId}
+          AND c.parent_id IS NULL
+    </select>
+
+    <!-- ===== 查询（顶层）- 帖子 ===== -->
+    <select id="pageTopByPost" resultMap="CommentVOMap">
+        SELECT
+        c.id,
+        CASE WHEN c.is_deleted=1 THEN '该评论已删除' ELSE c.content END AS content_out,
+        c.user_id,
+        u.name AS user_name,
+        u.avatar_url AS avatar_url,
+        c.parent_id, c.root_id, c.depth,
+        c.like_count, c.reply_count,
+        (c.is_deleted=1) AS deleted,
+        c.create_time,
+        c.path AS path_cursor      <!-- ★ 新增 -->
+        FROM comment c
+        LEFT JOIN user u ON u.id = c.user_id
+        WHERE c.post_id = #{postId}
+        AND c.parent_id IS NULL
+        <choose>
+            <when test="sort != null and sort == 'hot'">
+                ORDER BY (c.reply_count * 2 + c.like_count) DESC, c.create_time DESC
+            </when>
+            <otherwise>
+                ORDER BY c.create_time DESC
+            </otherwise>
+        </choose>
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="countTopByPost" resultType="long">
+        SELECT COUNT(1)
+        FROM comment c
+        WHERE c.post_id = #{postId}
+          AND c.parent_id IS NULL
+    </select>
+
+    <!-- ===== 子树（按 path 顺序）===== -->
+    <select id="listTreeByRoot" resultMap="CommentVOMap">
+        SELECT
+        c.id,
+        CASE WHEN c.is_deleted=1 THEN '该评论已删除' ELSE c.content END AS content_out,
+        c.user_id,
+        u.name AS user_name,
+        u.avatar_url AS avatar_url,
+        c.parent_id, c.root_id, c.depth,
+        c.like_count, c.reply_count,
+        (c.is_deleted=1) AS deleted,
+        c.create_time,
+        c.path AS path_cursor      <!-- ★ 新增 -->
+        FROM comment c
+        LEFT JOIN user u ON u.id = c.user_id
+        WHERE c.root_id = #{rootId} AND c.id != #{rootId}
+        <if test="afterPath != null and afterPath != ''">
+            AND c.path > #{afterPath}
+        </if>
+        ORDER BY c.path ASC
+        LIMIT #{size}
+    </select>
+
+    <!-- ===== 直接子评论分页 ===== -->
+    <select id="pageChildren" resultMap="CommentVOMap">
+        SELECT
+        c.id,
+        CASE WHEN c.is_deleted=1 THEN '该评论已删除' ELSE c.content END AS content_out,
+        c.user_id,
+        u.name AS user_name,
+        u.avatar_url AS avatar_url,
+        c.parent_id, c.root_id, c.depth,
+        c.like_count, c.reply_count,
+        (c.is_deleted=1) AS deleted,
+        c.create_time,
+        c.path AS path_cursor      <!-- ★ 新增 -->
+        FROM comment c
+        LEFT JOIN user u ON u.id = c.user_id
+        WHERE c.parent_id = #{parentId}
+        ORDER BY c.create_time ASC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="countChildren" resultType="long">
+        SELECT COUNT(1)
+        FROM comment
+        WHERE parent_id = #{parentId}
+    </select>
+
+    <!-- ===== 修改/删除 ===== -->
+    <update id="updateContent">
+        UPDATE comment
+        SET content     = #{content},
+            update_time = NOW()
+        WHERE id = #{id}
+          AND is_deleted = 0
+    </update>
+
+    <update id="softDelete">
+        UPDATE comment
+        SET is_deleted  = 1,
+            update_time = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <!-- ===== 点赞（幂等）===== -->
+    <insert id="insertLike">
+        INSERT INTO comment_like_relation (user_id, comment_id, create_time, update_time)
+        VALUES (#{userId}, #{commentId}, NOW(), NOW())
+        ON DUPLICATE KEY UPDATE update_time = VALUES(update_time)
+    </insert>
+
+
+    <delete id="deleteLike">
+        DELETE
+        FROM comment_like_relation
+        WHERE user_id = #{userId}
+          AND comment_id = #{commentId}
+    </delete>
+
+    <update id="incLikeCount">
+        UPDATE comment
+        SET like_count = like_count + 1
+        WHERE id = #{id}
+    </update>
+
+    <update id="decLikeCount">
+        UPDATE comment
+        SET like_count = GREATEST(like_count - 1, 0)
+        WHERE id = #{id}
+    </update>
+
+    <!-- 按ID返回 VO（含软删文案 & 用户信息） -->
+    <select id="selectVOById" resultMap="CommentVOMap">
+        SELECT
+        c.id,
+        CASE WHEN c.is_deleted=1 THEN '该评论已删除' ELSE c.content END AS content_out,
+        c.user_id,
+        u.name AS user_name,
+        u.avatar_url AS avatar_url,
+        c.parent_id, c.root_id, c.depth,
+        c.like_count, c.reply_count,
+        (c.is_deleted=1) AS deleted,
+        c.create_time,
+        c.path AS path_cursor      <!-- ★ 新增 -->
+        FROM comment c
+        LEFT JOIN user u ON u.id = c.user_id
+        WHERE c.id = #{id}
+    </select>
+
+    <!-- 批量查多个root的所有子孙（不含顶层本身），可选maxDepth -->
+    <select id="listDescendantsByRoots" resultMap="CommentVOMap">
+        SELECT
+        c.id,
+        CASE WHEN c.is_deleted=1 THEN '该评论已删除' ELSE c.content END AS content_out,
+        c.user_id,
+        u.name AS user_name,
+        u.avatar_url AS avatar_url,
+        c.parent_id, c.root_id, c.depth,
+        c.like_count, c.reply_count,
+        (c.is_deleted=1) AS deleted,
+        c.create_time,
+        c.path AS path_cursor      <!-- ★ 新增 -->
+        FROM comment c
+        LEFT JOIN user u ON u.id = c.user_id
+        WHERE c.root_id IN
+        <foreach collection="rootIds" item="rid" open="(" separator="," close=")">
+            #{rid}
+        </foreach>
+        AND c.depth &gt; 0
+        <if test="maxDepth != null">
+            AND c.depth &lt;= #{maxDepth}
+        </if>
+        ORDER BY c.root_id ASC, c.path ASC
+    </select>
+</mapper>
