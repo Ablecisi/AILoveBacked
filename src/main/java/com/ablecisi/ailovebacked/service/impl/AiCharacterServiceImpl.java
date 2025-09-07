@@ -1,6 +1,5 @@
 package com.ablecisi.ailovebacked.service.impl;
 
-import com.ablecisi.ailovebacked.context.BaseContext;
 import com.ablecisi.ailovebacked.mapper.AiCharacterMapper;
 import com.ablecisi.ailovebacked.pojo.dto.AiCharacterCreateDTO;
 import com.ablecisi.ailovebacked.pojo.dto.AiCharacterQueryDTO;
@@ -97,12 +96,6 @@ public class AiCharacterServiceImpl implements AiCharacterService {
         }
         if (!"ASC".equalsIgnoreCase(q.getOrder())) q.setOrder("DESC"); // 默认 DESC
         q.setOffset((q.getPage() - 1) * q.getSize()); // 计算偏移
-        Long userId = BaseContext.getCurrentId();
-        if (userId != null && userId > 0) {
-            q.setUserId(userId); // 只能查自己的
-        } else {
-            q.setUserId(null); // 未登录则查所有公开的
-        }
         long total = mapper.pageCount(q); // 先查总数
         List<AiCharacterVO> list = java.util.Collections.emptyList();
         if (total != 0) {

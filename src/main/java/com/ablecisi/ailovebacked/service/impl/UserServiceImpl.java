@@ -148,4 +148,28 @@ public class UserServiceImpl implements UserService {
         System.out.println(interests);
         return interests;
     }
+
+    @Override
+    public UserVO getUserProfile() {
+        Long userId = BaseContext.getCurrentId();
+        if (userId == null || userId <= 0) {
+            throw new BaseException("用户未登录");
+        }
+        User user = userMapper.getUserById(userId);
+        if (user == null) {
+            throw new BaseException("用户不存在");
+        }
+        return UserVO.builder()
+                .id(String.valueOf(user.getId()))
+                .username(user.getUsername())
+                .name(user.getName())
+                .description(user.getDescription())
+                .avatarUrl(user.getAvatarUrl())
+                .followersCount(user.getFollowersCount())
+                .followingCount(user.getFollowingCount())
+                .postIds(List.of()) // 这里可以调用帖子服务获取用户的帖子ID列表
+                .characterIds(List.of()) // 这里可以调用角色服务获取用户的角色ID列表
+                .isFollowed(false) // 自己的资料页，不需要关注状态
+                .build();
+    }
 }

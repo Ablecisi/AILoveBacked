@@ -155,6 +155,11 @@ public class AiCharacterController {
         return ok ? Result.success(true) : Result.error("设置启用状态失败", false);
     }
 
+    /**
+     * 获取角色类型列表
+     *
+     * @return 角色类型列表
+     */
     @GetMapping("/types")
     public Result<List<String>> getCharacterTypes() {
         log.info("获取角色类型列表");

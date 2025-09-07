@@ -49,4 +49,11 @@ public interface UserService {
      * @return 用户兴趣标签列表
      */
     List<String> getUserInterests(Long userId);
+
+    /**
+     * 获取当前登录用户的个人资料
+     *
+     * @return 用户视图对象
+     */
+    UserVO getUserProfile();
 }

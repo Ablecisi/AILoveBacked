@@ -117,4 +117,11 @@ public class UserController {
             return Result.error("获取失败，可能是用户不存在");
         }
     }
+
+    @GetMapping("/profile")
+    public Result<UserVO> getUserProfile() {
+        log.info("获取用户个人信息");
+        UserVO userVO = userService.getUserProfile();
+        return Result.success("获取成功", userVO);
+    }
 }
