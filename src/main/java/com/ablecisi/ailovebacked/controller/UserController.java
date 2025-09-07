@@ -13,7 +13,8 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 /**
- * AILoveBacked
+ * UserController
+ * AILoveBacked <br>
  * com.ablecisi.ailovebacked.controller
  * UserController <br>
  *

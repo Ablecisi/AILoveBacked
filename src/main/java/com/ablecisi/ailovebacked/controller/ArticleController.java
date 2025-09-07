@@ -11,7 +11,8 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 /**
- * AILoveBacked
+ * ArticleController
+ * AILoveBacked <br>
  * com.ablecisi.ailovebacked.controller <br>
  *
  * @author Ablecisi

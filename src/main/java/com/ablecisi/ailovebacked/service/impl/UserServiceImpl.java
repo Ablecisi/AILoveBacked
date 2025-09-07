@@ -71,6 +71,7 @@ public class UserServiceImpl implements UserService {
         return UserVO.builder()
                 .id(String.valueOf(user.getId()))
                 .username(user.getUsername())
+                .name(user.getName())
                 .description(user.getDescription())
                 .avatarUrl(user.getAvatarUrl())
                 .followersCount(user.getFollowersCount())

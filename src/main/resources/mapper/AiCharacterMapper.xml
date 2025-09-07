@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--
+  创建时间：2025/9/7 14:11
+  作者：Ablecisi
+-->
+<mapper namespace="com.ablecisi.ailovebacked.mapper.AiCharacterMapper">
+
+    <!-- 实体映射（用于 CUD 返回/必要场景） -->
+    <resultMap id="AiCharacterMap" type="com.ablecisi.ailovebacked.pojo.entity.AiCharacter">
+        <id column="id" property="id"/>
+        <result column="user_id" property="userId"/>
+        <result column="name" property="name"/>
+        <result column="type_id" property="typeId"/>
+        <result column="gender" property="gender"/>
+        <result column="age" property="age"/>
+        <result column="image_url" property="imageUrl"/>
+        <result column="traits" property="traits"/>
+        <result column="persona_desc" property="personaDesc"/>
+        <result column="interests" property="interests"/>
+        <result column="backstory" property="backstory"/>
+        <result column="online" property="online"/>
+        <result column="status" property="status"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <!-- VO 映射：包含 typeName -->
+    <resultMap id="AiCharacterVOMap" type="com.ablecisi.ailovebacked.pojo.vo.AiCharacterVO">
+        <id column="id" property="id"/>
+        <result column="user_id" property="userId"/>
+        <result column="name" property="name"/>
+        <result column="type_id" property="typeId"/>
+        <result column="type_name" property="typeName"/>
+        <result column="gender" property="gender"/>
+        <result column="age" property="age"/>
+        <result column="image_url" property="imageUrl"/>
+        <result column="traits" property="traits"/>
+        <result column="persona_desc" property="personaDesc"/>
+        <result column="interests" property="interests"/>
+        <result column="backstory" property="backstory"/>
+        <result column="online" property="online"/>
+        <result column="status" property="status"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <!-- ================= C ================= -->
+    <insert id="insert" parameterType="com.ablecisi.ailovebacked.pojo.entity.AiCharacter" useGeneratedKeys="true"
+            keyProperty="id">
+        INSERT INTO ai_character
+        (user_id, name, type_id, gender, age, image_url, traits, persona_desc, interests, backstory, online, status,
+         create_time, update_time)
+        VALUES (#{userId}, #{name}, #{typeId}, #{gender}, #{age}, #{imageUrl}, #{traits}, #{personaDesc}, #{interests},
+                #{backstory},
+                #{online}, #{status}, NOW(), NOW())
+    </insert>
+
+    <!-- ================= U ================= -->
+    <update id="update" parameterType="com.ablecisi.ailovebacked.pojo.entity.AiCharacter">
+        UPDATE ai_character
+        <set>
+            <if test="name != null">name = #{name},</if>
+            <if test="typeId != null">type_id = #{typeId},</if>
+            <if test="gender != null">gender = #{gender},</if>
+            <if test="age != null">age = #{age},</if>
+            <if test="imageUrl != null">image_url = #{imageUrl},</if>
+            <if test="traits != null">traits = #{traits},</if>
+            <if test="personaDesc != null">persona_desc = #{personaDesc},</if>
+            <if test="interests != null">interests = #{interests},</if>
+            <if test="backstory != null">backstory = #{backstory},</if>
+            <if test="online != null">online = #{online},</if>
+            <if test="status != null">status = #{status},</if>
+            update_time = NOW()
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateOnline">
+        UPDATE ai_character
+        SET online      = #{online},
+            update_time = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateStatus">
+        UPDATE ai_character
+        SET status      = #{status},
+            update_time = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <!-- ================= D ================= -->
+    <delete id="deleteById">
+        DELETE
+        FROM ai_character
+        WHERE id = #{id}
+    </delete>
+
+    <!-- ================= R（JOIN 返回 VO） ================= -->
+    <select id="selectById" resultMap="AiCharacterVOMap">
+        SELECT a.id,
+               a.user_id,
+               a.name,
+               a.type_id,
+               a.gender,
+               a.age,
+               a.image_url,
+               a.traits,
+               a.persona_desc,
+               a.interests,
+               a.backstory,
+               a.online,
+               a.status,
+               a.create_time,
+               a.update_time,
+               t.name AS type_name
+        FROM ai_character a
+                 LEFT JOIN type t ON a.type_id = t.id
+        WHERE a.id = #{id}
+    </select>
+
+    <select id="pageQuery" resultMap="AiCharacterVOMap">
+        SELECT
+        a.id, a.user_id, a.name, a.type_id, a.gender, a.age, a.image_url,
+        a.traits, a.persona_desc, a.interests, a.backstory,
+        a.online, a.status, a.create_time, a.update_time,
+        t.name AS type_name
+        FROM ai_character a
+        LEFT JOIN type t ON a.type_id = t.id
+        <where>
+            <if test="q.userId != null">
+                AND (a.user_id = #{q.userId} OR a.user_id IS NULL)
+            </if>
+            <if test="q.typeId != null">AND a.type_id = #{q.typeId}</if>
+            <if test="q.status != null">AND a.status = #{q.status}</if>
+            <if test="q.keyword != null and q.keyword != ''">
+                AND (
+                a.name LIKE CONCAT('%', #{q.keyword}, '%')
+                OR a.persona_desc LIKE CONCAT('%', #{q.keyword}, '%')
+                OR a.backstory LIKE CONCAT('%', #{q.keyword}, '%')
+                OR a.traits LIKE CONCAT('%', #{q.keyword}, '%')
+                )
+            </if>
+        </where>
+        ORDER BY
+        <choose>
+            <when test="q.orderBy != null and q.orderBy.trim() != ''">
+                ${q.orderBy} ${q.order}
+            </when>
+            <otherwise>a.update_time DESC</otherwise>
+        </choose>
+        LIMIT #{q.size} OFFSET #{q.offset}
+    </select>
+
+    <select id="pageCount" resultType="long">
+        SELECT COUNT(1)
+        FROM ai_character a
+        <where>
+            <if test="q.userId != null">
+                AND (a.user_id = #{q.userId} OR a.user_id IS NULL)
+            </if>
+            <if test="q.typeId != null">AND a.type_id = #{q.typeId}</if>
+            <if test="q.status != null">AND a.status = #{q.status}</if>
+            <if test="q.keyword != null and q.keyword != ''">
+                AND (
+                a.name LIKE CONCAT('%', #{q.keyword}, '%')
+                OR a.persona_desc LIKE CONCAT('%', #{q.keyword}, '%')
+                OR a.backstory LIKE CONCAT('%', #{q.keyword}, '%')
+                OR a.traits LIKE CONCAT('%', #{q.keyword}, '%')
+                )
+            </if>
+        </where>
+    </select>
+    <select id="getCharacterTypes" resultType="java.lang.String">
+        SELECT name
+        FROM type
+    </select>
+
+</mapper>
