@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--
+  创建时间：2025/9/10 17:40
+  作者：Ablecisi
+-->
+<mapper namespace="com.ablecisi.ailovebacked.mapper.UserProfileMapper">
+    <resultMap id="ProfileMap" type="com.ablecisi.ailovebacked.pojo.entity.UserProfile">
+        <id column="user_id" property="userId"/>
+        <result column="interests" property="interests"/>
+        <result column="tone_preference" property="tonePreference"/>
+        <result column="emotion_stats" property="emotionStats"/>
+        <result column="to_do" property="toDo"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="create_time" property="createTime"/>
+    </resultMap>
+
+    <select id="selectByUserId" resultMap="ProfileMap">
+        SELECT user_id, interests, tone_preference, emotion_stats, to_do, update_time, create_time
+        FROM user_profile
+        WHERE user_id = #{userId}
+    </select>
+
+    <insert id="insert" parameterType="com.ablecisi.ailovebacked.pojo.entity.UserProfile">
+        INSERT INTO user_profile (user_id, interests, tone_preference, emotion_stats, to_do, update_time, create_time)
+        VALUES (#{userId}, #{interests}, #{tonePreference}, #{emotionStats}, #{toDo}, NOW(), NOW())
+    </insert>
+
+    <update id="update" parameterType="com.ablecisi.ailovebacked.pojo.entity.UserProfile">
+        UPDATE user_profile
+        SET interests       = #{interests},
+            tone_preference = #{tonePreference},
+            emotion_stats   = #{emotionStats},
+            to_do           = #{toDo},
+            update_time     = NOW()
+        WHERE user_id = #{userId}
+    </update>
+</mapper>

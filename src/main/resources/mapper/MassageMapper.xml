@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--
+  创建时间：2025/9/10 16:39
+  作者：Ablecisi
+-->
+<mapper namespace="com.ablecisi.ailovebacked.mapper.MessageMapper">
+
+    <resultMap id="MsgVOMap" type="com.ablecisi.ailovebacked.pojo.vo.MessageVO">
+        <id column="id" property="id"/>
+        <result column="type" property="type"/>
+        <result column="content" property="content"/>
+        <result column="emotion" property="emotion"/>
+        <result column="confidence" property="confidence"/>
+        <result column="conversation_id" property="conversationId"/>
+        <result column="is_read" property="isRead"/>
+        <result column="create_time" property="createTime"/>
+    </resultMap>
+
+    <insert id="insert" parameterType="com.ablecisi.ailovebacked.pojo.entity.Message" useGeneratedKeys="true"
+            keyProperty="id">
+        INSERT INTO message (conversation_id, user_id, type, content, emotion, confidence, is_read, create_time,
+                             update_time)
+        VALUES (#{conversationId}, #{userId}, #{type}, #{content}, #{emotion}, #{confidence}, #{isRead}, NOW(), NOW())
+    </insert>
+
+    <update id="updateEmotion">
+        UPDATE message
+        SET emotion     = #{emotion},
+            confidence  = #{confidence},
+            update_time = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <select id="pageByConversation" resultMap="MsgVOMap">
+        SELECT id,
+               type,
+               content,
+               emotion,
+               confidence,
+               conversation_id,
+               is_read,
+               create_time
+        FROM message
+        WHERE conversation_id = #{cid}
+        ORDER BY id DESC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="countByConversation" resultType="long">
+        SELECT COUNT(1)
+        FROM message
+        WHERE conversation_id = #{cid}
+    </select>
+
+    <select id="latestN" resultMap="MsgVOMap">
+        SELECT id,
+               type,
+               content,
+               emotion,
+               confidence,
+               conversation_id,
+               is_read,
+               create_time
+        FROM message
+        WHERE conversation_id = #{cid}
+        ORDER BY id DESC
+        LIMIT #{limit}
+    </select>
+</mapper>

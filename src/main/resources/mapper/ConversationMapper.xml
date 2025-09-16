@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ablecisi.ailovebacked.mapper.ConversationMapper">
+    <!--
+      创建时间：2025/9/10 16:38
+      作者：Ablecisi
+    -->
+    <resultMap id="ConvMap" type="com.ablecisi.ailovebacked.pojo.entity.Conversation">
+        <id column="id" property="id"/>
+        <result column="user_id" property="userId"/>
+        <result column="character_id" property="characterId"/>
+        <result column="title" property="title"/>
+        <result column="last_message" property="lastMessage"/>
+        <result column="last_msg_at" property="lastMsgAt"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <resultMap id="ConvVOMap" type="com.ablecisi.ailovebacked.pojo.vo.ConversationVO">
+        <id column="id" property="id"/>
+        <result column="user_id" property="userId"/>
+        <result column="character_id" property="characterId"/>
+        <result column="character_name" property="characterName"/>
+        <result column="character_avatar" property="characterAvatar"/>
+        <result column="title" property="title"/>
+        <result column="last_message" property="lastMessage"/>
+        <result column="last_msg_at" property="lastMsgAt"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <insert id="insert" parameterType="com.ablecisi.ailovebacked.pojo.entity.Conversation" useGeneratedKeys="true"
+            keyProperty="id">
+        INSERT INTO conversation (user_id, character_id, title, last_message, last_msg_at, create_time, update_time)
+        VALUES (#{userId}, #{characterId}, #{title}, #{lastMessage}, #{lastMsgAt}, NOW(), NOW())
+    </insert>
+
+    <update id="updateLast">
+        UPDATE conversation
+        SET last_message = #{last},
+            last_msg_at  = #{lastAt},
+            update_time  = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <select id="selectById" resultMap="ConvMap">
+        SELECT id,
+               user_id,
+               character_id,
+               title,
+               last_message,
+               last_msg_at,
+               create_time,
+               update_time
+        FROM conversation
+        WHERE id = #{id}
+    </select>
+
+    <select id="pageByUser" resultMap="ConvVOMap">
+        SELECT c.id,
+               c.user_id,
+               c.character_id,
+               c.title,
+               c.last_message,
+               c.last_msg_at,
+               c.update_time,
+               a.name      AS character_name,
+               a.image_url AS character_avatar
+        FROM conversation c
+                 LEFT JOIN ai_character a ON c.character_id = a.id
+        WHERE c.user_id = #{userId}
+        ORDER BY COALESCE(c.last_msg_at, c.update_time) DESC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="countByUser" resultType="long">
+        SELECT COUNT(1)
+        FROM conversation
+        WHERE user_id = #{userId}
+    </select>
+</mapper>
