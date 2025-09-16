@@ -23,6 +23,7 @@ public class ChatReplyVO {
     private String emotion;
     private Double confidence;
     private String roleType; // 可选：返回角色类型名
+    private Long characterId; // 可选：返回角色ID
     private Long messageId;  // AI消息ID
     private Integer tokensUsed; // 本次对话消耗的Token数
 }

@@ -66,5 +66,9 @@ public class MessageService {
         }
         return sb.toString().trim();
     }
+
+    public List<MessageVO> pageByConversation(Long conversationId, int page, int size, int offset) {
+        return messageMapper.pageByConversation(conversationId, page, size, offset);
+    }
 }
 

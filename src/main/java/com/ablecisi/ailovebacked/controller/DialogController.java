@@ -3,17 +3,17 @@ package com.ablecisi.ailovebacked.controller;
 import com.ablecisi.ailovebacked.context.BaseContext;
 import com.ablecisi.ailovebacked.pojo.dto.ChatSendDTO;
 import com.ablecisi.ailovebacked.pojo.vo.ChatReplyVO;
+import com.ablecisi.ailovebacked.pojo.vo.MessageVO;
 import com.ablecisi.ailovebacked.result.Result;
 import com.ablecisi.ailovebacked.service.DialogService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.concurrent.Executors;
 
 /**
@@ -30,12 +30,14 @@ import java.util.concurrent.Executors;
 @RestController
 @RequestMapping("/api/dialog")
 @RequiredArgsConstructor
+@Slf4j
 public class DialogController {
 
     private final DialogService dialogService;
 
     @PostMapping("/send")
     public Result<ChatReplyVO> send(@RequestBody @Valid ChatSendDTO dto) {
+        log.info("用户 {} 发送消息到会话 {}: {}", BaseContext.getCurrentId(), dto.getConversationId(), dto.getText());
         dto.setUserId(BaseContext.getCurrentId()); // JWT 注入
         return Result.success(dialogService.handleUserMessage(dto));
     }
@@ -45,6 +47,7 @@ public class DialogController {
      */
     @PostMapping(value = "/send/stream", produces = "text/event-stream")
     public SseEmitter sendStream(@RequestBody @Valid ChatSendDTO dto) {
+        log.info("用户 {} 发送消息到会话 {}: {}", BaseContext.getCurrentId(), dto.getConversationId(), dto.getText());
         dto.setUserId(BaseContext.getCurrentId());
         SseEmitter emitter = new SseEmitter(0L);
         Executors.newSingleThreadExecutor().submit(() -> {
@@ -66,6 +69,14 @@ public class DialogController {
             }
         });
         return emitter;
+    }
+
+    @GetMapping("/list")
+    public Result<List<MessageVO>> list(@RequestParam Long conversationId,
+                                        @RequestParam(defaultValue = "1") int page,
+                                        @RequestParam(defaultValue = "10") int size) {
+        log.info("分页拉取会话 {} 消息列表: page={}, size={}", conversationId, page, size);
+        return Result.success(dialogService.listMessages(conversationId, page, size));
     }
 }
 

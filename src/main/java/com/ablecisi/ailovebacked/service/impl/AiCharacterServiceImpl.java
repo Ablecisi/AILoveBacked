@@ -133,4 +133,9 @@ public class AiCharacterServiceImpl implements AiCharacterService {
                 .map(String::trim).filter(x -> !x.isEmpty()).toArray(String[]::new);
         return new com.google.gson.Gson().toJson(arr);
     }
+
+    @Override
+    public AiCharacterVO getCharacterByConversationId(Long conversationId) {
+        return mapper.selectByConversationId(conversationId);
+    }
 }

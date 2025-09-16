@@ -34,4 +34,6 @@ public interface AiCharacterService {
     boolean setStatus(Long id, Integer status);
 
     List<String> getCharacterTypes();
+
+    AiCharacterVO getCharacterByConversationId(Long conversationId);
 }

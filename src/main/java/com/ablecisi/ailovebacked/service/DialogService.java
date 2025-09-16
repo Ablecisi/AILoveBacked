@@ -6,12 +6,15 @@ import com.ablecisi.ailovebacked.pojo.dto.ChatSendDTO;
 import com.ablecisi.ailovebacked.pojo.entity.Message;
 import com.ablecisi.ailovebacked.pojo.vo.AiCharacterVO;
 import com.ablecisi.ailovebacked.pojo.vo.ChatReplyVO;
+import com.ablecisi.ailovebacked.pojo.vo.MessageVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.Comparator;
+import java.util.List;
 import java.util.function.Consumer;
 
 /**
@@ -70,6 +73,7 @@ public class DialogService {
         return new ChatReplyVO(
                 reply, emo.getEmotion(), emo.getConfidence(),
                 role == null ? null : role.getTypeName(),
+                dto.getCharacterId(),
                 am.getId(),
                 llmClient.tokensUsed()
         );
@@ -97,8 +101,17 @@ public class DialogService {
         return new ChatReplyVO(
                 reply, emo.getEmotion(), emo.getConfidence(),
                 role == null ? null : role.getTypeName(),
+                dto.getCharacterId(),
                 am.getId(),
                 llmClient.tokensUsed()
         );
+    }
+
+    public List<MessageVO> listMessages(Long conversationId, int page, int size) {
+        int offset = (page - 1) * size;
+        List<MessageVO> ml = messageService.pageByConversation(conversationId, page, size, offset);
+        // 倒序改正序
+        ml.sort(Comparator.comparing(MessageVO::getCreateTime));
+        return ml;
     }
 }

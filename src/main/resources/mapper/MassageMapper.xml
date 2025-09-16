@@ -44,7 +44,7 @@
                create_time
         FROM message
         WHERE conversation_id = #{cid}
-        ORDER BY id DESC
+        ORDER BY create_time DESC
         LIMIT #{size} OFFSET #{offset}
     </select>
 
@@ -65,7 +65,7 @@
                create_time
         FROM message
         WHERE conversation_id = #{cid}
-        ORDER BY id DESC
+        ORDER BY create_time DESC
         LIMIT #{limit}
     </select>
 </mapper>

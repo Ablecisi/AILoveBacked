@@ -40,4 +40,6 @@ public interface AiCharacterMapper {
     long pageCount(@Param("q") AiCharacterQueryDTO q);
 
     List<String> getCharacterTypes();
+
+    AiCharacterVO selectByConversationId(@Param("conversationId") Long conversationId);
 }

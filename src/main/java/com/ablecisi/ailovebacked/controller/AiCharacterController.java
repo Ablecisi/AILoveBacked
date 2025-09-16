@@ -166,4 +166,11 @@ public class AiCharacterController {
         List<String> types = service.getCharacterTypes();
         return Result.success(types);
     }
+
+    @GetMapping("/cd")
+    public Result<AiCharacterVO> getCharacterByConversationId(@RequestParam Long conversationId) {
+        log.info("通过conversationId获取角色: conversationId={}", conversationId);
+        AiCharacterVO vo = service.getCharacterByConversationId(conversationId);
+        return vo != null ? Result.success(vo) : Result.error("未找到该角色", null);
+    }
 }

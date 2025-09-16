@@ -23,6 +23,6 @@ public class MessageVO {
     private String emotion;         // ★
     private Double confidence;      // ★
     private Long conversationId;
-    private Short isRead;
+    private Short isRead;           // 0未读/1已读（AI消息用）
     private LocalDateTime createTime;
 }

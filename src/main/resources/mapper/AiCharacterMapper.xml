@@ -178,5 +178,27 @@
         SELECT name
         FROM type
     </select>
+    <select id="selectByConversationId" resultMap="AiCharacterVOMap">
+        SELECT a.id,
+               a.user_id,
+               a.name,
+               a.type_id,
+               a.gender,
+               a.age,
+               a.image_url,
+               a.traits,
+               a.persona_desc,
+               a.interests,
+               a.backstory,
+               a.online,
+               a.status,
+               a.create_time,
+               a.update_time,
+               t.name AS type_name
+        FROM ai_character a
+                 LEFT JOIN type t ON a.type_id = t.id
+                 LEFT JOIN ailianlian.conversation c on a.id = c.character_id
+        WHERE c.id = #{conversationId}
+    </select>
 
 </mapper>
