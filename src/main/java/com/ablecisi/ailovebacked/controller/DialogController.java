@@ -45,27 +45,27 @@ public class DialogController {
     /**
      * SSE 流式；Android 也可长连接读取 chunk（OkHttp）。
      */
-    @PostMapping(value = "/send/stream", produces = "text/event-stream")
+    @PostMapping(value = "/send/stream", produces = "text/event-stream") // 响应流
     public SseEmitter sendStream(@RequestBody @Valid ChatSendDTO dto) {
         log.info("用户 {} 发送消息到会话 {}: {}", BaseContext.getCurrentId(), dto.getConversationId(), dto.getText());
         dto.setUserId(BaseContext.getCurrentId());
-        SseEmitter emitter = new SseEmitter(0L);
-        Executors.newSingleThreadExecutor().submit(() -> {
+        SseEmitter emitter = new SseEmitter(0L); // 无超时
+        Executors.newSingleThreadExecutor().submit(() -> { // 创建新线程执行
             try {
-                ChatReplyVO vo = dialogService.handleUserMessageStream(dto, piece -> {
+                ChatReplyVO vo = dialogService.handleUserMessageStream(dto, piece -> { // 回调片段
                     try {
-                        emitter.send(SseEmitter.event().name("chunk").data(piece));
+                        emitter.send(SseEmitter.event().name("chunk").data(piece)); // 发送片段
                     } catch (IOException ignored) {
                     }
                 });
-                emitter.send(SseEmitter.event().name("done").data(vo.getMessageId()));
-                emitter.complete();
+                emitter.send(SseEmitter.event().name("done").data(vo.getMessageId())); // 发送完成
+                emitter.complete(); // 完成
             } catch (Exception e) {
                 try {
-                    emitter.send(SseEmitter.event().name("error").data(e.getMessage()));
+                    emitter.send(SseEmitter.event().name("error").data(e.getMessage())); // 错误
                 } catch (IOException ignored) {
                 }
-                emitter.completeWithError(e);
+                emitter.completeWithError(e); // 错误
             }
         });
         return emitter;
