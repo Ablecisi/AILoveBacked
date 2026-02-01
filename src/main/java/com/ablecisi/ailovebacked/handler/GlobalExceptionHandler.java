@@ -38,7 +38,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler
     public Result<String> exceptionHandler(BaseException ex) {
         log.error("Base异常信息：{}", ex.getMessage());
-        return Result.error(404, ex.getMessage(), null);
+        return Result.error(StatusCodeConstant.NOT_FOUND, ex.getMessage(), null);
     }
 
     /**
@@ -138,7 +138,7 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(Exception.class)
     public Result<?> handleOther(Exception e) {
-        log.error("系统异常：", e);
+        log.error("系统异常：{}", e.getMessage());
         // 生产上可记录日志 e
         return Result.error(StatusCodeConstant.INTERNAL_SERVER_ERROR, "服务器开小差啦", null);
     }

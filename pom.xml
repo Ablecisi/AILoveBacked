@@ -148,6 +148,16 @@
             <artifactId>zai-sdk</artifactId>
             <version>0.0.4</version>
         </dependency>
+
+        <!-- Test -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- junit -->
+
     </dependencies>
 
     <build>
