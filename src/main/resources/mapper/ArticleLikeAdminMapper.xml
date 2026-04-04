@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ablecisi.ailovebacked.mapper.ArticleLikeAdminMapper">
+
+    <resultMap id="Map" type="com.ablecisi.ailovebacked.pojo.entity.ArticleLikeRelation">
+        <id column="id" property="id"/>
+        <result column="user_id" property="userId"/>
+        <result column="article_id" property="articleId"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <select id="selectById" resultMap="Map">
+        SELECT *
+        FROM article_like_relation
+        WHERE id = #{id}
+    </select>
+
+    <select id="countAll" resultType="long">
+        SELECT COUNT(*)
+        FROM article_like_relation
+    </select>
+
+    <select id="selectPage" resultMap="Map">
+        SELECT *
+        FROM article_like_relation
+        ORDER BY id DESC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <insert id="insert" parameterType="com.ablecisi.ailovebacked.pojo.entity.ArticleLikeRelation"
+            useGeneratedKeys="true"
+            keyProperty="id">
+        INSERT INTO article_like_relation (user_id, article_id, create_time, update_time)
+        VALUES (#{userId}, #{articleId}, NOW(), NOW())
+    </insert>
+
+    <update id="updateRow" parameterType="com.ablecisi.ailovebacked.pojo.entity.ArticleLikeRelation">
+        UPDATE article_like_relation
+        SET user_id     = #{userId},
+            article_id  = #{articleId},
+            update_time = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE
+        FROM article_like_relation
+        WHERE id = #{id}
+    </delete>
+</mapper>

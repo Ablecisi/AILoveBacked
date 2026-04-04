@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ablecisi.ailovebacked.mapper.EmotionLogMapper">
+
+    <resultMap id="EmoMap" type="com.ablecisi.ailovebacked.pojo.entity.EmotionLog">
+        <id column="id" property="id"/>
+        <result column="user_id" property="userId"/>
+        <result column="message_id" property="messageId"/>
+        <result column="emotion" property="emotion"/>
+        <result column="confidence" property="confidence"/>
+        <result column="create_time" property="createTime"/>
+    </resultMap>
+
+    <select id="selectById" resultMap="EmoMap">
+        SELECT *
+        FROM emotion_log
+        WHERE id = #{id}
+    </select>
+
+    <select id="countAll" resultType="long">
+        SELECT COUNT(*)
+        FROM emotion_log
+    </select>
+
+    <select id="selectPage" resultMap="EmoMap">
+        SELECT *
+        FROM emotion_log
+        ORDER BY id DESC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <insert id="insert" parameterType="com.ablecisi.ailovebacked.pojo.entity.EmotionLog" useGeneratedKeys="true"
+            keyProperty="id">
+        INSERT INTO emotion_log (user_id, message_id, emotion, confidence, create_time)
+        VALUES (#{userId}, #{messageId}, #{emotion}, #{confidence}, NOW())
+    </insert>
+
+    <update id="updateRow" parameterType="com.ablecisi.ailovebacked.pojo.entity.EmotionLog">
+        UPDATE emotion_log
+        SET user_id    = #{userId},
+            message_id = #{messageId},
+            emotion    = #{emotion},
+            confidence = #{confidence}
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE
+        FROM emotion_log
+        WHERE id = #{id}
+    </delete>
+</mapper>

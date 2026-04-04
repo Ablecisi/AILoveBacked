@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ablecisi.ailovebacked.mapper.FollowRelationMapper">
+
+    <resultMap id="FollowMap" type="com.ablecisi.ailovebacked.pojo.entity.FollowRelation">
+        <id column="id" property="id"/>
+        <result column="following_id" property="followingId"/>
+        <result column="follower_id" property="followerId"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <select id="selectById" resultMap="FollowMap">
+        SELECT *
+        FROM follow_relation
+        WHERE id = #{id}
+    </select>
+
+    <select id="countAll" resultType="long">
+        SELECT COUNT(*)
+        FROM follow_relation
+    </select>
+
+    <select id="selectPage" resultMap="FollowMap">
+        SELECT *
+        FROM follow_relation
+        ORDER BY id DESC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <insert id="insert" parameterType="com.ablecisi.ailovebacked.pojo.entity.FollowRelation" useGeneratedKeys="true"
+            keyProperty="id">
+        INSERT INTO follow_relation (following_id, follower_id, create_time, update_time)
+        VALUES (#{followingId}, #{followerId}, NOW(), NOW())
+    </insert>
+
+    <update id="updateRow" parameterType="com.ablecisi.ailovebacked.pojo.entity.FollowRelation">
+        UPDATE follow_relation
+        SET following_id = #{followingId},
+            follower_id  = #{followerId},
+            update_time  = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE
+        FROM follow_relation
+        WHERE id = #{id}
+    </delete>
+</mapper>
