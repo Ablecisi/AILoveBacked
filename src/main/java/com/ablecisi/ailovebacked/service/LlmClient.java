@@ -1,5 +1,6 @@
 package com.ablecisi.ailovebacked.service;
 
+import com.ablecisi.ailovebacked.exception.BaseException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -92,7 +93,7 @@ public class LlmClient {
                 }
             }
         } catch (Exception e) {
-            // ignore
+            throw new BaseException(e.getMessage());
         }
         return "抱歉，我暂时没想好该怎么回答。";
     }
