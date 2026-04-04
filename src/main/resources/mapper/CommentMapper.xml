@@ -292,4 +292,72 @@
         </if>
         ORDER BY c.root_id ASC, c.path ASC
     </select>
+
+    <select id="countPageForAdmin" resultType="long">
+        SELECT COUNT(1)
+        FROM comment c
+        <where>
+            <if test="keyword != null and keyword != ''">
+                AND c.content LIKE CONCAT('%', #{keyword}, '%')
+            </if>
+            <if test="articleId != null">
+                AND c.article_id = #{articleId}
+            </if>
+            <if test="postId != null">
+                AND c.post_id = #{postId}
+            </if>
+        </where>
+    </select>
+
+    <select id="pageForAdmin" resultType="com.ablecisi.ailovebacked.pojo.vo.admin.AdminCommentListVO">
+        SELECT c.id,
+        c.content,
+        c.article_id AS articleId,
+        c.post_id AS postId,
+        c.user_id AS userId,
+        u.name AS userName,
+        c.parent_id AS parentId,
+        c.like_count AS likeCount,
+        c.reply_count AS replyCount,
+        (c.is_deleted = 1) AS deleted,
+        c.create_time AS createTime
+        FROM comment c
+        LEFT JOIN user u ON u.id = c.user_id
+        <where>
+            <if test="keyword != null and keyword != ''">
+                AND c.content LIKE CONCAT('%', #{keyword}, '%')
+            </if>
+            <if test="articleId != null">
+                AND c.article_id = #{articleId}
+            </if>
+            <if test="postId != null">
+                AND c.post_id = #{postId}
+            </if>
+        </where>
+        ORDER BY c.id DESC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <update id="adminUpdateRow" parameterType="Comment">
+        UPDATE comment
+        SET content     = #{content},
+            post_id     = #{postId},
+            article_id  = #{articleId},
+            user_id     = #{userId},
+            parent_id   = #{parentId},
+            root_id     = #{rootId},
+            path        = #{path},
+            depth       = #{depth},
+            like_count  = #{likeCount},
+            reply_count = #{replyCount},
+            is_deleted  = #{isDeleted},
+            update_time = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <delete id="adminDeleteHard">
+        DELETE
+        FROM comment
+        WHERE id = #{id}
+    </delete>
 </mapper>

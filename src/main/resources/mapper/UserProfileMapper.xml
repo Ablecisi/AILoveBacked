@@ -36,4 +36,22 @@
             update_time     = NOW()
         WHERE user_id = #{userId}
     </update>
+
+    <select id="countAll" resultType="long">
+        SELECT COUNT(*)
+        FROM user_profile
+    </select>
+
+    <select id="selectPage" resultMap="ProfileMap">
+        SELECT user_id, interests, tone_preference, emotion_stats, to_do, update_time, create_time
+        FROM user_profile
+        ORDER BY user_id DESC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <delete id="deleteByUserId">
+        DELETE
+        FROM user_profile
+        WHERE user_id = #{userId}
+    </delete>
 </mapper>

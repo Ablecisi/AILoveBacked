@@ -18,7 +18,21 @@
             <if test="followersCount != null">followers_count = #{followersCount},</if>
             update_time = NOW(),
         </set>
+        WHERE id = #{id}
     </update>
+
+    <insert id="insertUser" parameterType="User" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO user (username, password, name, description, avatar_url, following_count, followers_count,
+                          create_time, update_time)
+        VALUES (#{username}, #{password}, #{name}, #{description}, #{avatarUrl},
+                #{followingCount}, #{followersCount}, NOW(), NOW())
+    </insert>
+
+    <delete id="deleteUserById">
+        DELETE
+        FROM user
+        WHERE id = #{id}
+    </delete>
 
     <select id="getUserById" resultType="User">
         SELECT *
@@ -34,5 +48,34 @@
         SELECT interests
         FROM user_profile
         WHERE user_id = #{userId}
+    </select>
+
+    <select id="countPageForAdmin" resultType="long">
+        SELECT COUNT(*) FROM user
+        <where>
+            <if test="keyword != null and keyword != ''">
+                AND (username LIKE CONCAT('%', #{keyword}, '%') OR name LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+        </where>
+    </select>
+
+    <select id="pageForAdmin" resultType="com.ablecisi.ailovebacked.pojo.vo.admin.AdminUserListVO">
+        SELECT id,
+        username,
+        name,
+        description,
+        avatar_url AS avatarUrl,
+        following_count AS followingCount,
+        followers_count AS followersCount,
+        create_time AS createTime,
+        update_time AS updateTime
+        FROM user
+        <where>
+            <if test="keyword != null and keyword != ''">
+                AND (username LIKE CONCAT('%', #{keyword}, '%') OR name LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+        </where>
+        ORDER BY id DESC
+        LIMIT #{offset}, #{size}
     </select>
 </mapper>

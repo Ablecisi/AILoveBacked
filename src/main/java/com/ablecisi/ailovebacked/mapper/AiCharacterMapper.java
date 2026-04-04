@@ -42,4 +42,6 @@ public interface AiCharacterMapper {
     List<String> getCharacterTypes();
 
     AiCharacterVO selectByConversationId(@Param("conversationId") Long conversationId);
+
+    AiCharacter selectEntityById(@Param("id") Long id);
 }

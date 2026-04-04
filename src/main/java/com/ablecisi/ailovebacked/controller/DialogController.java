@@ -7,14 +7,14 @@ import com.ablecisi.ailovebacked.pojo.vo.MessageVO;
 import com.ablecisi.ailovebacked.result.Result;
 import com.ablecisi.ailovebacked.service.DialogService;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.concurrent.Executors;
+import java.util.concurrent.Executor;
 
 /**
  * DialogController
@@ -29,11 +29,17 @@ import java.util.concurrent.Executors;
  **/
 @RestController
 @RequestMapping("/api/dialog")
-@RequiredArgsConstructor
 @Slf4j
 public class DialogController {
 
     private final DialogService dialogService;
+    private final Executor dialogSseExecutor;
+
+    public DialogController(DialogService dialogService,
+                            @Qualifier("dialogSseExecutor") Executor dialogSseExecutor) {
+        this.dialogService = dialogService;
+        this.dialogSseExecutor = dialogSseExecutor;
+    }
 
     @PostMapping("/send")
     public Result<ChatReplyVO> send(@RequestBody @Valid ChatSendDTO dto) {
@@ -50,7 +56,7 @@ public class DialogController {
         log.info("用户 {} 发送消息到会话 {}: {}", BaseContext.getCurrentId(), dto.getConversationId(), dto.getText());
         dto.setUserId(BaseContext.getCurrentId());
         SseEmitter emitter = new SseEmitter(0L);
-        Executors.newSingleThreadExecutor().submit(() -> {
+        dialogSseExecutor.execute(() -> {
             try {
                 ChatReplyVO vo = dialogService.handleUserMessageStream(dto, piece -> {
                     try {
@@ -76,7 +82,7 @@ public class DialogController {
                                         @RequestParam(defaultValue = "1") int page,
                                         @RequestParam(defaultValue = "10") int size) {
         log.info("分页拉取会话 {} 消息列表: page={}, size={}", conversationId, page, size);
-        return Result.success(dialogService.listMessages(conversationId, page, size));
+        return Result.success(dialogService.listMessages(conversationId, page, size, BaseContext.getCurrentId()));
     }
 }
 

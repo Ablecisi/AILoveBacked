@@ -396,4 +396,40 @@ CREATE TABLE `user_profile`
   COLLATE = utf8mb4_0900_ai_ci COMMENT = '用户画像'
   ROW_FORMAT = Dynamic;
 
+-- ----------------------------
+-- 运营后台管理员（与 C 端 user 表独立）
+-- ----------------------------
+DROP TABLE IF EXISTS `admin_user`;
+CREATE TABLE `admin_user`
+(
+    `id`          bigint                                                        NOT NULL AUTO_INCREMENT COMMENT 'ID',
+    `username`    varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci  NOT NULL COMMENT '登录名',
+    `password`    varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT 'BCrypt 密码',
+    `create_time` datetime                                                      NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time` datetime                                                      NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (`id`) USING BTREE,
+    UNIQUE INDEX `uk_admin_username` (`username` ASC) USING BTREE
+) ENGINE = InnoDB
+  CHARACTER SET = utf8mb4
+  COLLATE = utf8mb4_0900_ai_ci COMMENT = '运营后台管理员'
+  ROW_FORMAT = Dynamic;
+
+-- 应用远程配置（bootstrap，无 JWT 也可读）
+DROP TABLE IF EXISTS `app_config`;
+CREATE TABLE `app_config`
+(
+    `config_key`   varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '配置键',
+    `config_value` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci        NULL COMMENT '配置值（可为 JSON 字符串）',
+    `update_time`  datetime                                                     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (`config_key`) USING BTREE
+) ENGINE = InnoDB
+  CHARACTER SET = utf8mb4
+  COLLATE = utf8mb4_0900_ai_ci COMMENT = '客户端 bootstrap 键值'
+  ROW_FORMAT = Dynamic;
+
+INSERT INTO `app_config` (`config_key`, `config_value`)
+VALUES ('bootstrap.version', '1'),
+       ('minAppVersion', '1'),
+       ('home.featured.enabled', 'true');
+
 SET FOREIGN_KEY_CHECKS = 1;

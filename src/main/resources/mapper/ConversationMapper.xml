@@ -79,4 +79,66 @@
         FROM conversation
         WHERE user_id = #{userId}
     </select>
+
+    <select id="countPageForAdmin" resultType="long">
+        SELECT COUNT(1)
+        FROM conversation c
+        <where>
+            <if test="userId != null">
+                AND c.user_id = #{userId}
+            </if>
+            <if test="keyword != null and keyword != ''">
+                AND (
+                c.title LIKE CONCAT('%', #{keyword}, '%')
+                OR c.last_message LIKE CONCAT('%', #{keyword}, '%')
+                OR CAST(c.id AS CHAR) LIKE CONCAT('%', #{keyword}, '%')
+                )
+            </if>
+        </where>
+    </select>
+
+    <select id="pageForAdmin" resultType="com.ablecisi.ailovebacked.pojo.vo.admin.AdminConversationListVO">
+        SELECT c.id,
+        c.user_id,
+        c.character_id,
+        a.name AS characterName,
+        c.title,
+        c.last_message,
+        c.last_msg_at,
+        c.create_time,
+        c.update_time
+        FROM conversation c
+        LEFT JOIN ai_character a ON c.character_id = a.id
+        <where>
+            <if test="userId != null">
+                AND c.user_id = #{userId}
+            </if>
+            <if test="keyword != null and keyword != ''">
+                AND (
+                c.title LIKE CONCAT('%', #{keyword}, '%')
+                OR c.last_message LIKE CONCAT('%', #{keyword}, '%')
+                OR CAST(c.id AS CHAR) LIKE CONCAT('%', #{keyword}, '%')
+                )
+            </if>
+        </where>
+        ORDER BY COALESCE(c.last_msg_at, c.update_time) DESC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <update id="updateRow" parameterType="com.ablecisi.ailovebacked.pojo.entity.Conversation">
+        UPDATE conversation
+        SET user_id      = #{userId},
+            character_id = #{characterId},
+            title        = #{title},
+            last_message = #{lastMessage},
+            last_msg_at  = #{lastMsgAt},
+            update_time  = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE
+        FROM conversation
+        WHERE id = #{id}
+    </delete>
 </mapper>

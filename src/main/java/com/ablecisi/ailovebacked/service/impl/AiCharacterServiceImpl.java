@@ -1,6 +1,10 @@
 package com.ablecisi.ailovebacked.service.impl;
 
+import com.ablecisi.ailovebacked.context.BaseContext;
+import com.ablecisi.ailovebacked.exception.BaseException;
+import com.ablecisi.ailovebacked.exception.ForbiddenException;
 import com.ablecisi.ailovebacked.mapper.AiCharacterMapper;
+import com.ablecisi.ailovebacked.mapper.ConversationMapper;
 import com.ablecisi.ailovebacked.pojo.dto.AiCharacterCreateDTO;
 import com.ablecisi.ailovebacked.pojo.dto.AiCharacterQueryDTO;
 import com.ablecisi.ailovebacked.pojo.dto.AiCharacterUpdateDTO;
@@ -32,6 +36,7 @@ import java.util.Set;
 public class AiCharacterServiceImpl implements AiCharacterService {
 
     private final AiCharacterMapper mapper;
+    private final ConversationMapper conversationMapper;
 
     private static final Set<String> ORDER_BY_WHITELIST = Set.of(
             "update_time", "create_time", "name", "id"
@@ -57,9 +62,20 @@ public class AiCharacterServiceImpl implements AiCharacterService {
         return po.getId();
     }
 
+    private void assertCharacterOwned(Long characterId, Long operatorUserId) {
+        AiCharacterVO vo = mapper.selectById(characterId);
+        if (vo == null) {
+            throw new BaseException("角色不存在");
+        }
+        if (vo.getUserId() == null || !vo.getUserId().equals(operatorUserId)) {
+            throw new ForbiddenException("无权操作该角色");
+        }
+    }
+
     @Override
     @Transactional
     public boolean update(AiCharacterUpdateDTO dto) {
+        assertCharacterOwned(dto.getId(), BaseContext.getCurrentId());
         AiCharacter po = new AiCharacter();
         po.setId(dto.getId());
         po.setName(dto.getName());
@@ -79,6 +95,7 @@ public class AiCharacterServiceImpl implements AiCharacterService {
     @Override
     @Transactional
     public boolean delete(Long id) {
+        assertCharacterOwned(id, BaseContext.getCurrentId());
         return mapper.deleteById(id) > 0;
     }
 
@@ -107,12 +124,14 @@ public class AiCharacterServiceImpl implements AiCharacterService {
     @Override
     @Transactional
     public boolean setOnline(Long id, Integer online) {
+        assertCharacterOwned(id, BaseContext.getCurrentId());
         return mapper.updateOnline(id, (online != null && online == 1) ? 1 : 0) > 0;
     }
 
     @Override
     @Transactional
     public boolean setStatus(Long id, Integer status) {
+        assertCharacterOwned(id, BaseContext.getCurrentId());
         return mapper.updateStatus(id, (status != null && status == 1) ? 1 : 0) > 0;
     }
 
@@ -136,6 +155,14 @@ public class AiCharacterServiceImpl implements AiCharacterService {
 
     @Override
     public AiCharacterVO getCharacterByConversationId(Long conversationId) {
+        var conv = conversationMapper.selectById(conversationId);
+        if (conv == null) {
+            return null;
+        }
+        Long uid = BaseContext.getCurrentId();
+        if (uid == null || !conv.getUserId().equals(uid)) {
+            throw new ForbiddenException("无权查看该会话关联角色");
+        }
         return mapper.selectByConversationId(conversationId);
     }
 }

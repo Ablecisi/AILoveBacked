@@ -23,7 +23,9 @@ import lombok.NoArgsConstructor;
 public class ChatSendDTO {
     @NotNull
     private Long conversationId;
-    @NotNull
+    /**
+     * 由服务端从 JWT 注入，请求体可不传
+     */
     private Long userId;
     @NotNull
     private Long characterId;

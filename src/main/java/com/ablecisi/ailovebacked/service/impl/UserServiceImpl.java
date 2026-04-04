@@ -14,7 +14,7 @@ import com.ablecisi.ailovebacked.service.UserService;
 import com.ablecisi.ailovebacked.utils.JsonUtil;
 import com.ablecisi.ailovebacked.utils.JwtUtil;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,11 +37,12 @@ import java.util.Map;
 public class UserServiceImpl implements UserService {
     private final UserMapper userMapper;
     private final JwtProperties jwtProperties;
+    private final PasswordEncoder passwordEncoder;
 
-    @Autowired
-    public UserServiceImpl(UserMapper userMapper, JwtProperties jwtProperties) {
+    public UserServiceImpl(UserMapper userMapper, JwtProperties jwtProperties, PasswordEncoder passwordEncoder) {
         this.userMapper = userMapper;
         this.jwtProperties = jwtProperties;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Override
@@ -54,8 +55,7 @@ public class UserServiceImpl implements UserService {
         if (user == null) {
             throw new BaseException("用户不存在");
         }
-        // 检查密码是否匹配
-        if (!user.getPassword().equals(userDTO.getPassword())) {
+        if (!passwordMatches(user, userDTO.getPassword())) {
             throw new BaseException("密码错误");
         }
         BaseContext.setCurrentId(user.getId());
@@ -83,14 +83,33 @@ public class UserServiceImpl implements UserService {
                 .build();
     }
 
+    private boolean passwordMatches(User user, String rawPassword) {
+        String stored = user.getPassword();
+        if (stored == null) {
+            return false;
+        }
+        if (stored.startsWith("$2a$") || stored.startsWith("$2b$") || stored.startsWith("$2y$")) {
+            return passwordEncoder.matches(rawPassword, stored);
+        }
+        if (stored.equals(rawPassword)) {
+            user.setPassword(passwordEncoder.encode(rawPassword));
+            userMapper.updateUser(user);
+            return true;
+        }
+        return false;
+    }
+
     @Override
     @Transactional
     public FollowMessageConstant followUser(UserFollowDTO userFollowDTO) {
-        Long userId = Long.parseLong(userFollowDTO.getUserId());
+        Long userId = BaseContext.getCurrentId();
+        if (userId == null) {
+            throw new BaseException("用户未登录");
+        }
         Long authorId = Long.parseLong(userFollowDTO.getAuthorId());
         log.info("用户 {} 执行关注操作，目标作者ID: {}， 是否关注 {}", userId, authorId, userFollowDTO.getIsFollowing());
         // 更新用户关注关系
-        if (userFollowDTO.getIsFollowing()) {
+        if (Boolean.TRUE.equals(userFollowDTO.getIsFollowing())) {
             // 如果是关注操作，添加关注关系
             // 首先检查是否已经关注
             if (userMapper.selectFollowRelation(userId, authorId)) {
@@ -136,17 +155,13 @@ public class UserServiceImpl implements UserService {
         return userMapper.selectFollowRelation(userId, authorId);
     }
 
-    /**
-     * 根据用户ID获取用户兴趣标签
-     *
-     * @param userId 用户ID
-     * @return 用户兴趣标签列表
-     */
     @Override
-    public List<String> getUserInterests(Long userId) {
-        List<String> interests = JsonUtil.fromJsonList(userMapper.getUserInterests(userId), String.class);
-        System.out.println(interests);
-        return interests;
+    public List<String> getCurrentUserInterests() {
+        Long userId = BaseContext.getCurrentId();
+        if (userId == null || userId <= 0) {
+            throw new BaseException("用户未登录");
+        }
+        return JsonUtil.fromJsonList(userMapper.getUserInterests(userId), String.class);
     }
 
     @Override

@@ -2,6 +2,7 @@ package com.ablecisi.ailovebacked.mapper;
 
 import com.ablecisi.ailovebacked.pojo.entity.Comment;
 import com.ablecisi.ailovebacked.pojo.vo.CommentVO;
+import com.ablecisi.ailovebacked.pojo.vo.admin.AdminCommentListVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -83,4 +84,18 @@ public interface CommentMapper {
     // 方案A：批量查这一页所有顶层的子孙（一次SQL；depth不限可传null）
     List<CommentVO> listDescendantsByRoots(@Param("rootIds") List<Long> rootIds,
                                            @Param("maxDepth") Integer maxDepth);
+
+    long countPageForAdmin(@Param("keyword") String keyword,
+                           @Param("articleId") Long articleId,
+                           @Param("postId") Long postId);
+
+    List<AdminCommentListVO> pageForAdmin(@Param("keyword") String keyword,
+                                          @Param("articleId") Long articleId,
+                                          @Param("postId") Long postId,
+                                          @Param("offset") int offset,
+                                          @Param("size") int size);
+
+    int adminUpdateRow(Comment c);
+
+    int adminDeleteHard(@Param("id") Long id);
 }

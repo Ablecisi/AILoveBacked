@@ -41,6 +41,9 @@ ailove:
     user-secret-key: ${sky.jwt.user-secret-key} # 用户秘钥
     user-token-name: ${sky.jwt.user-token-name} # 用户令牌名称
     user-ttl: ${sky.jwt.user-ttl} # 用户过期时间
+  admin:
+    jwt-secret-key: ${AILOVE_ADMIN_JWT_SECRET:change-admin-jwt-secret-via-env-32bytes-min!}
+    ttl-ms: ${AILOVE_ADMIN_JWT_TTL:86400000}
 
 ml: # 机器学习配置
   bert:

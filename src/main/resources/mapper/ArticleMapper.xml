@@ -46,4 +46,64 @@
         ORDER BY view_count AND comment_count * 3 AND like_count * 5 DESC
         LIMIT 10
     </select>
+
+    <select id="countPageForAdmin" resultType="long">
+        SELECT COUNT(*) FROM article
+        <where>
+            <if test="keyword != null and keyword != ''">
+                AND title LIKE CONCAT('%', #{keyword}, '%')
+            </if>
+        </where>
+    </select>
+
+    <select id="pageForAdmin" resultType="com.ablecisi.ailovebacked.pojo.vo.admin.AdminArticleListVO">
+        SELECT id,
+        title,
+        description,
+        user_id AS userId,
+        view_count AS viewCount,
+        like_count AS likeCount,
+        comment_count AS commentCount,
+        create_time AS createTime,
+        update_time AS updateTime
+        FROM article
+        <where>
+            <if test="keyword != null and keyword != ''">
+                AND title LIKE CONCAT('%', #{keyword}, '%')
+            </if>
+        </where>
+        ORDER BY id DESC
+        LIMIT #{offset}, #{size}
+    </select>
+
+    <insert id="insert" parameterType="com.ablecisi.ailovebacked.pojo.entity.Article" useGeneratedKeys="true"
+            keyProperty="id">
+        INSERT INTO article (title, description, content, cover_image_url, user_id, view_count, like_count,
+                             comment_count, tags, create_time, update_time)
+        VALUES (#{title}, #{description}, #{content}, #{coverImageUrl}, #{userId},
+                #{viewCount}, #{likeCount}, #{commentCount},
+                #{tags, typeHandler=com.ablecisi.ailovebacked.handler.JsonStringListTypeHandler},
+                NOW(), NOW())
+    </insert>
+
+    <update id="updateRow" parameterType="com.ablecisi.ailovebacked.pojo.entity.Article">
+        UPDATE article
+        SET title           = #{title},
+            description     = #{description},
+            content         = #{content},
+            cover_image_url = #{coverImageUrl},
+            user_id         = #{userId},
+            view_count      = #{viewCount},
+            like_count      = #{likeCount},
+            comment_count   = #{commentCount},
+            tags            = #{tags, typeHandler=com.ablecisi.ailovebacked.handler.JsonStringListTypeHandler},
+            update_time     = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE
+        FROM article
+        WHERE id = #{id}
+    </delete>
 </mapper>

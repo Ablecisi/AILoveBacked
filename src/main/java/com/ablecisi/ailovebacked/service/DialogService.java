@@ -1,8 +1,11 @@
 package com.ablecisi.ailovebacked.service;
 
+import com.ablecisi.ailovebacked.exception.BaseException;
+import com.ablecisi.ailovebacked.exception.ForbiddenException;
 import com.ablecisi.ailovebacked.mapper.AiCharacterMapper;
 import com.ablecisi.ailovebacked.mapper.ConversationMapper;
 import com.ablecisi.ailovebacked.pojo.dto.ChatSendDTO;
+import com.ablecisi.ailovebacked.pojo.entity.Conversation;
 import com.ablecisi.ailovebacked.pojo.entity.Message;
 import com.ablecisi.ailovebacked.pojo.vo.AiCharacterVO;
 import com.ablecisi.ailovebacked.pojo.vo.ChatReplyVO;
@@ -33,6 +36,7 @@ import java.util.function.Consumer;
 public class DialogService {
 
     private final EmotionClient emotionClient;
+    private final UserApiRateLimiter userApiRateLimiter;
     private final PromptService promptService;
     private final LlmClient llmClient;
     private final MessageService messageService;
@@ -40,8 +44,31 @@ public class DialogService {
     private final AiCharacterMapper aiCharacterMapper;
     private final ConversationMapper conversationMapper;
 
+    private void assertUserOwnsConversation(Long conversationId, Long userId) {
+        Conversation c = conversationMapper.selectById(conversationId);
+        if (c == null) {
+            throw new BaseException("会话不存在");
+        }
+        if (!c.getUserId().equals(userId)) {
+            throw new ForbiddenException("无权访问该会话");
+        }
+    }
+
+    private void assertCharacterMatchesConversation(Long conversationId, Long characterId) {
+        Conversation c = conversationMapper.selectById(conversationId);
+        if (c == null) {
+            throw new BaseException("会话不存在");
+        }
+        if (!c.getCharacterId().equals(characterId)) {
+            throw new BaseException("角色与会话不匹配");
+        }
+    }
+
     @Transactional
     public ChatReplyVO handleUserMessage(ChatSendDTO dto) {
+        userApiRateLimiter.assertChatSendAllowed(dto.getUserId());
+        assertUserOwnsConversation(dto.getConversationId(), dto.getUserId());
+        assertCharacterMatchesConversation(dto.getConversationId(), dto.getCharacterId());
         // 1. 保存用户消息
         Message um = messageService.saveUserMessage(dto.getConversationId(), dto.getUserId(), dto.getText());
 
@@ -84,6 +111,9 @@ public class DialogService {
      */
     @Transactional
     public ChatReplyVO handleUserMessageStream(ChatSendDTO dto, Consumer<String> onDelta) throws IOException {
+        userApiRateLimiter.assertChatSendAllowed(dto.getUserId());
+        assertUserOwnsConversation(dto.getConversationId(), dto.getUserId());
+        assertCharacterMatchesConversation(dto.getConversationId(), dto.getCharacterId());
         Message um = messageService.saveUserMessage(dto.getConversationId(), dto.getUserId(), dto.getText());
         var emo = emotionClient.detect(dto.getText());
         messageService.updateEmotion(um.getId(), emo);
@@ -107,7 +137,8 @@ public class DialogService {
         );
     }
 
-    public List<MessageVO> listMessages(Long conversationId, int page, int size) {
+    public List<MessageVO> listMessages(Long conversationId, int page, int size, Long currentUserId) {
+        assertUserOwnsConversation(conversationId, currentUserId);
         int offset = (page - 1) * size;
         List<MessageVO> ml = messageService.pageByConversation(conversationId, page, size, offset);
         // 倒序改正序

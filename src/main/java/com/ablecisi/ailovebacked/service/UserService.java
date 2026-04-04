@@ -43,12 +43,9 @@ public interface UserService {
     Boolean isFollowing(Long userId, Long authorId);
 
     /**
-     * 根据用户ID获取用户兴趣标签
-     *
-     * @param userId 用户ID
-     * @return 用户兴趣标签列表
+     * 当前登录用户的兴趣标签（忽略请求中的 userId，防止越权）
      */
-    List<String> getUserInterests(Long userId);
+    List<String> getCurrentUserInterests();
 
     /**
      * 获取当前登录用户的个人资料

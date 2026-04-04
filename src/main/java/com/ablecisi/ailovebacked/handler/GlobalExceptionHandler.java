@@ -2,10 +2,14 @@ package com.ablecisi.ailovebacked.handler;
 
 import com.ablecisi.ailovebacked.constant.StatusCodeConstant;
 import com.ablecisi.ailovebacked.exception.BaseException;
+import com.ablecisi.ailovebacked.exception.ForbiddenException;
+import com.ablecisi.ailovebacked.exception.RateLimitExceededException;
 import com.ablecisi.ailovebacked.exception.TokenObsoleteException;
 import com.ablecisi.ailovebacked.result.Result;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.BindException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -39,6 +43,19 @@ public class GlobalExceptionHandler {
     public Result<String> exceptionHandler(BaseException ex) {
         log.error("Base异常信息：{}", ex.getMessage());
         return Result.error(StatusCodeConstant.NOT_FOUND, ex.getMessage(), null);
+    }
+
+    @ExceptionHandler
+    public Result<String> exceptionHandler(ForbiddenException ex) {
+        log.warn("禁止访问：{}", ex.getMessage());
+        return Result.error(StatusCodeConstant.FORBIDDEN, ex.getMessage(), null);
+    }
+
+    @ExceptionHandler(RateLimitExceededException.class)
+    public ResponseEntity<Result<Void>> rateLimit(RateLimitExceededException ex) {
+        log.warn("限流：{}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                .body(Result.error(StatusCodeConstant.TOO_MANY_REQUESTS, ex.getMessage(), null));
     }
 
     /**

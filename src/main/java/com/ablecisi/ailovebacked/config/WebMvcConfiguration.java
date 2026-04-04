@@ -2,7 +2,6 @@ package com.ablecisi.ailovebacked.config;
 
 import com.ablecisi.ailovebacked.interceptor.JwtTokenUserInterceptor;
 import com.ablecisi.ailovebacked.json.JacksonObjectMapper;
-import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
@@ -34,8 +33,11 @@ public class WebMvcConfiguration extends WebMvcConfigurationSupport {
     protected void addInterceptors(InterceptorRegistry registry) {
         log.info("开始注册用户端拦截器...");
         registry.addInterceptor(jwtTokenUserInterceptor)
-                .addPathPatterns("/**")
-                .excludePathPatterns("/api/user/login");
+                .addPathPatterns("/api/**")
+                .excludePathPatterns(
+                        "/api/user/login",
+                        "/api/app/bootstrap"
+                );
     }
 
     /**
@@ -44,7 +46,7 @@ public class WebMvcConfiguration extends WebMvcConfigurationSupport {
      * @param converters 消息转换器列表
      */
     @Override
-    protected void extendMessageConverters(@NonNull List<HttpMessageConverter<?>> converters) {
+    protected void extendMessageConverters(List<HttpMessageConverter<?>> converters) {
         log.info("开始扩展消息转换器...");
         // 创建一个消息转换器
         MappingJackson2HttpMessageConverter converter = new MappingJackson2HttpMessageConverter();

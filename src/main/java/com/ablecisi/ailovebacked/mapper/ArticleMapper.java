@@ -1,7 +1,9 @@
 package com.ablecisi.ailovebacked.mapper;
 
 import com.ablecisi.ailovebacked.pojo.entity.Article;
+import com.ablecisi.ailovebacked.pojo.vo.admin.AdminArticleListVO;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
@@ -42,4 +44,15 @@ public interface ArticleMapper {
      */
     List<Article> selectHotArticles();
 
+    long countPageForAdmin(@Param("keyword") String keyword);
+
+    List<AdminArticleListVO> pageForAdmin(@Param("keyword") String keyword,
+                                          @Param("offset") int offset,
+                                          @Param("size") int size);
+
+    int insert(Article article);
+
+    int updateRow(Article article);
+
+    int deleteById(@Param("id") Long id);
 }

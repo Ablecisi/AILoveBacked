@@ -1,10 +1,8 @@
 package com.ablecisi.ailovebacked.mapper;
 
 import com.ablecisi.ailovebacked.pojo.entity.User;
-import org.apache.ibatis.annotations.Delete;
-import org.apache.ibatis.annotations.Insert;
-import org.apache.ibatis.annotations.Mapper;
-import org.apache.ibatis.annotations.Select;
+import com.ablecisi.ailovebacked.pojo.vo.admin.AdminUserListVO;
+import org.apache.ibatis.annotations.*;
 
 import java.util.List;
 
@@ -88,4 +86,14 @@ public interface UserMapper {
      * @return 用户兴趣标签列表
      */
     String getUserInterests(Long userId);
+
+    long countPageForAdmin(@Param("keyword") String keyword);
+
+    List<AdminUserListVO> pageForAdmin(@Param("keyword") String keyword,
+                                       @Param("offset") int offset,
+                                       @Param("size") int size);
+
+    int insertUser(User user);
+
+    int deleteUserById(@Param("id") Long id);
 }

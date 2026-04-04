@@ -2,6 +2,7 @@ package com.ablecisi.ailovebacked.mapper;
 
 import com.ablecisi.ailovebacked.pojo.entity.Conversation;
 import com.ablecisi.ailovebacked.pojo.vo.ConversationVO;
+import com.ablecisi.ailovebacked.pojo.vo.admin.AdminConversationListVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -36,4 +37,16 @@ public interface ConversationMapper {
     );
 
     long countByUser(@Param("userId") Long userId);
+
+    long countPageForAdmin(@Param("keyword") String keyword,
+                           @Param("userId") Long userId);
+
+    List<AdminConversationListVO> pageForAdmin(@Param("keyword") String keyword,
+                                               @Param("userId") Long userId,
+                                               @Param("offset") int offset,
+                                               @Param("size") int size);
+
+    int updateRow(Conversation po);
+
+    int deleteById(@Param("id") Long id);
 }

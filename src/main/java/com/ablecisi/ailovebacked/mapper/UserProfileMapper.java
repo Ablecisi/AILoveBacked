@@ -22,5 +22,11 @@ public interface UserProfileMapper {
     int insert(UserProfile po);
 
     int update(UserProfile po);
+
+    long countAll();
+
+    java.util.List<UserProfile> selectPage(@Param("offset") int offset, @Param("size") int size);
+
+    int deleteByUserId(@Param("userId") Long userId);
 }
 

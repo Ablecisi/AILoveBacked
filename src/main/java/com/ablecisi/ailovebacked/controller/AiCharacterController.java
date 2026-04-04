@@ -1,5 +1,6 @@
 package com.ablecisi.ailovebacked.controller;
 
+import com.ablecisi.ailovebacked.context.BaseContext;
 import com.ablecisi.ailovebacked.pojo.dto.AiCharacterCreateDTO;
 import com.ablecisi.ailovebacked.pojo.dto.AiCharacterQueryDTO;
 import com.ablecisi.ailovebacked.pojo.dto.AiCharacterUpdateDTO;
@@ -41,6 +42,7 @@ public class AiCharacterController {
      */
     @PostMapping("/create")
     public Result<Long> create(@RequestBody @Valid AiCharacterCreateDTO dto) {
+        dto.setUserId(BaseContext.getCurrentId());
         log.info("创建角色: {}", dto);
         Long id = service.create(dto);
         return Result.success("创建成功", id);
@@ -90,7 +92,6 @@ public class AiCharacterController {
     /**
      * 角色列表
      *
-     * @param userId  用户ID
      * @param typeId  角色类型ID
      * @param status  角色状态
      * @param keyword 关键词
@@ -102,7 +103,6 @@ public class AiCharacterController {
      */
     @GetMapping("/list")
     public Result<PageResult<AiCharacterVO>> list(
-            @RequestParam(required = false) Long userId,
             @RequestParam(required = false) Long typeId,
             @RequestParam(required = false) Integer status,
             @RequestParam(required = false) String keyword,
@@ -111,10 +111,10 @@ public class AiCharacterController {
             @RequestParam(defaultValue = "update_time") String orderBy,
             @RequestParam(defaultValue = "DESC") String order
     ) {
-        log.info("查询角色列表: userId={}, typeId={}, status={}, keyword={}, page={}, size={}, orderBy={}, order={}",
-                userId, typeId, status, keyword, page, size, orderBy, order);
+        log.info("查询角色列表: currentUser={}, typeId={}, status={}, keyword={}, page={}, size={}, orderBy={}, order={}",
+                BaseContext.getCurrentId(), typeId, status, keyword, page, size, orderBy, order);
         AiCharacterQueryDTO q = new AiCharacterQueryDTO();
-        q.setUserId(userId);
+        q.setUserId(BaseContext.getCurrentId());
         q.setTypeId(typeId);
         q.setStatus(status);
         q.setKeyword(keyword);

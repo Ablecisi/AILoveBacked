@@ -2,6 +2,7 @@ package com.ablecisi.ailovebacked.mapper;
 
 import com.ablecisi.ailovebacked.pojo.entity.Message;
 import com.ablecisi.ailovebacked.pojo.vo.MessageVO;
+import com.ablecisi.ailovebacked.pojo.vo.admin.AdminMessageListVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -38,5 +39,19 @@ public interface MessageMapper {
      * 最近 N 条（按 id 倒序取 N 条，再在 Service 里正序）
      */
     List<MessageVO> latestN(@Param("cid") Long conversationId, @Param("limit") int limit);
+
+    long countPageForAdmin(@Param("keyword") String keyword,
+                           @Param("conversationId") Long conversationId);
+
+    List<AdminMessageListVO> pageForAdmin(@Param("keyword") String keyword,
+                                          @Param("conversationId") Long conversationId,
+                                          @Param("offset") int offset,
+                                          @Param("size") int size);
+
+    Message selectEntityById(@Param("id") Long id);
+
+    int updateRow(Message po);
+
+    int deleteById(@Param("id") Long id);
 }
 

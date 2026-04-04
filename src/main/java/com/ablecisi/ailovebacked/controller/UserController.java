@@ -1,6 +1,8 @@
 package com.ablecisi.ailovebacked.controller;
 
 import com.ablecisi.ailovebacked.constant.FollowMessageConstant;
+import com.ablecisi.ailovebacked.constant.StatusCodeConstant;
+import com.ablecisi.ailovebacked.context.BaseContext;
 import com.ablecisi.ailovebacked.pojo.dto.UserDTO;
 import com.ablecisi.ailovebacked.pojo.dto.UserFollowDTO;
 import com.ablecisi.ailovebacked.pojo.vo.UserVO;
@@ -57,17 +59,17 @@ public class UserController {
      */
     @PostMapping("/follow")
     public Result<Boolean> followUser(@RequestBody UserFollowDTO userFollowDTO) {
-        log.info("用户 {} 关注作者 {}", userFollowDTO.getUserId(), userFollowDTO.getAuthorId());
-        if (userFollowDTO.getUserId() == null || userFollowDTO.getAuthorId() == null) {
-            log.warn("用户ID或作者ID不能为空.");
-            return Result.error("用户ID或作者ID不能为空");
+        log.info("当前用户 {} 关注作者 {}", BaseContext.getCurrentId(), userFollowDTO.getAuthorId());
+        if (userFollowDTO.getAuthorId() == null || userFollowDTO.getIsFollowing() == null) {
+            log.warn("作者ID或关注状态不能为空.");
+            return Result.error("作者ID或关注状态不能为空");
         }
         FollowMessageConstant isFollowing = userService.followUser(userFollowDTO);
         if (isFollowing == FollowMessageConstant.FOLLOW_SUCCESS) {
-            log.info("用户 {} 关注作者 {} 成功", userFollowDTO.getUserId(), userFollowDTO.getAuthorId());
+            log.info("关注作者 {} 成功", userFollowDTO.getAuthorId());
             return Result.success(FollowMessageConstant.FOLLOW_SUCCESS.getMessage(), true);
         } else if (isFollowing == FollowMessageConstant.UNFOLLOW_SUCCESS) {
-            log.info("用户 {} 取消关注作者 {} 成功", userFollowDTO.getUserId(), userFollowDTO.getAuthorId());
+            log.info("取消关注作者 {} 成功", userFollowDTO.getAuthorId());
             return Result.success(FollowMessageConstant.UNFOLLOW_SUCCESS.getMessage(), false);
         } else {
             log.error("关注或取消关注失败: {}", isFollowing.getMessage());
@@ -89,6 +91,10 @@ public class UserController {
             log.warn("用户ID或作者ID不能为空");
             return Result.error("用户ID或作者ID不能为空");
         }
+        Long current = BaseContext.getCurrentId();
+        if (current == null || !current.equals(Long.parseLong(userId))) {
+            return Result.error(StatusCodeConstant.FORBIDDEN, "只能查询本人的关注状态", null);
+        }
         Boolean isFollowing = userService.isFollowing(Long.parseLong(userId), Long.parseLong(authorId));
         if (isFollowing != null) {
             return Result.success("查询成功", isFollowing);
@@ -100,22 +106,13 @@ public class UserController {
     /**
      * 获取用户兴趣标签
      *
-     * @param userId 用户ID
      * @return 兴趣标签列表
      */
     @GetMapping("/interests")
-    public Result<List<String>> getUserInterests(String userId) {
-        log.info("获取用户 {} 的兴趣标签", userId);
-        if (userId == null) {
-            log.warn("用户ID不能为空");
-            return Result.error("用户ID不能为空");
-        }
-        List<String> interests = userService.getUserInterests(Long.parseLong(userId));
-        if (interests != null) {
-            return Result.success("获取成功", interests);
-        } else {
-            return Result.error("获取失败，可能是用户不存在");
-        }
+    public Result<List<String>> getUserInterests() {
+        log.info("获取当前用户兴趣标签");
+        List<String> interests = userService.getCurrentUserInterests();
+        return Result.success("获取成功", interests != null ? interests : List.of());
     }
 
     @GetMapping("/profile")

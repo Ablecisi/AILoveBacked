@@ -178,6 +178,12 @@
         SELECT name
         FROM type
     </select>
+    <select id="selectEntityById" resultMap="AiCharacterMap">
+        SELECT *
+        FROM ai_character
+        WHERE id = #{id}
+    </select>
+
     <select id="selectByConversationId" resultMap="AiCharacterVOMap">
         SELECT a.id,
                a.user_id,
@@ -197,7 +203,7 @@
                t.name AS type_name
         FROM ai_character a
                  LEFT JOIN type t ON a.type_id = t.id
-                 LEFT JOIN ailianlian.conversation c on a.id = c.character_id
+                 INNER JOIN conversation c ON a.id = c.character_id
         WHERE c.id = #{conversationId}
     </select>
 
