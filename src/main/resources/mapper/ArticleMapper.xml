@@ -56,16 +56,35 @@
         </where>
     </select>
 
-    <select id="pageForAdmin" resultType="com.ablecisi.ailovebacked.pojo.vo.admin.AdminArticleListVO">
+    <resultMap id="AdminArticleListMap" type="com.ablecisi.ailovebacked.pojo.vo.admin.AdminArticleListVO">
+        <id column="id" property="id"/>
+        <result column="title" property="title"/>
+        <result column="description" property="description"/>
+        <result column="content" property="content"/>
+        <result column="cover_image_url" property="coverImageUrl"/>
+        <result column="user_id" property="userId"/>
+        <result column="view_count" property="viewCount"/>
+        <result column="like_count" property="likeCount"/>
+        <result column="comment_count" property="commentCount"/>
+        <result column="tags" property="tags"
+                typeHandler="com.ablecisi.ailovebacked.handler.JsonStringListTypeHandler"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <select id="pageForAdmin" resultMap="AdminArticleListMap">
         SELECT id,
         title,
         description,
-        user_id AS userId,
-        view_count AS viewCount,
-        like_count AS likeCount,
-        comment_count AS commentCount,
-        create_time AS createTime,
-        update_time AS updateTime
+        content,
+        cover_image_url,
+        user_id,
+        view_count,
+        like_count,
+        comment_count,
+        tags,
+        create_time,
+        update_time
         FROM article
         <where>
             <if test="keyword != null and keyword != ''">

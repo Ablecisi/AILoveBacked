@@ -9,6 +9,7 @@ import com.ablecisi.ailovebacked.service.DialogService;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
@@ -49,26 +50,30 @@ public class DialogController {
     }
 
     /**
-     * SSE 流式；Android 也可长连接读取 chunk（OkHttp）。
+     * SSE 流式对话：事件 {@code chunk} 为 JSON 字符串片段；{@code done} 为完整 {@link ChatReplyVO}；{@code error} 为错误文案。
+     * 客户端需 {@code Accept: text/event-stream}，使用可流式读取的 HTTP 客户端（如 OkHttp）。
      */
-    @PostMapping(value = "/send/stream", produces = "text/event-stream")
+    @PostMapping(value = "/send/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter sendStream(@RequestBody @Valid ChatSendDTO dto) {
-        log.info("用户 {} 发送消息到会话 {}: {}", BaseContext.getCurrentId(), dto.getConversationId(), dto.getText());
+        log.info("用户 {} 流式发送消息到会话 {}: {}", BaseContext.getCurrentId(), dto.getConversationId(), dto.getText());
         dto.setUserId(BaseContext.getCurrentId());
         SseEmitter emitter = new SseEmitter(0L);
         dialogSseExecutor.execute(() -> {
             try {
                 ChatReplyVO vo = dialogService.handleUserMessageStream(dto, piece -> {
                     try {
-                        emitter.send(SseEmitter.event().name("chunk").data(piece));
+                        // APPLICATION_JSON：data 行为合法 JSON，避免正文换行破坏 SSE，移动端可用 JSON 解析为 String
+                        emitter.send(SseEmitter.event().name("chunk").data(piece, MediaType.APPLICATION_JSON));
                     } catch (IOException ignored) {
                     }
                 });
-                emitter.send(SseEmitter.event().name("done").data(vo.getMessageId()));
+                emitter.send(SseEmitter.event().name("done").data(vo, MediaType.APPLICATION_JSON));
                 emitter.complete();
             } catch (Exception e) {
+                log.warn("流式对话失败", e);
                 try {
-                    emitter.send(SseEmitter.event().name("error").data(e.getMessage()));
+                    String msg = e.getMessage() == null ? "流式对话失败" : e.getMessage();
+                    emitter.send(SseEmitter.event().name("error").data(msg, MediaType.APPLICATION_JSON));
                 } catch (IOException ignored) {
                 }
                 emitter.completeWithError(e);

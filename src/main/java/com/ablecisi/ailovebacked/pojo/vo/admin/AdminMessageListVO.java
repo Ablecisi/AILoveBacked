@@ -10,8 +10,10 @@ public class AdminMessageListVO {
     private Long conversationId;
     private Long userId;
     private Integer type;
-    private String contentPreview;
+    private String content;
     private String emotion;
     private Double confidence;
+    private Integer isRead;
     private LocalDateTime createTime;
+    private LocalDateTime updateTime;
 }

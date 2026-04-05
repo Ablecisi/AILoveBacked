@@ -99,14 +99,14 @@
 
     <select id="pageForAdmin" resultType="com.ablecisi.ailovebacked.pojo.vo.admin.AdminConversationListVO">
         SELECT c.id,
-        c.user_id,
-        c.character_id,
+        c.user_id AS userId,
+        c.character_id AS characterId,
         a.name AS characterName,
         c.title,
-        c.last_message,
-        c.last_msg_at,
-        c.create_time,
-        c.update_time
+        c.last_message AS lastMessage,
+        c.last_msg_at AS lastMsgAt,
+        c.create_time AS createTime,
+        c.update_time AS updateTime
         FROM conversation c
         LEFT JOIN ai_character a ON c.character_id = a.id
         <where>

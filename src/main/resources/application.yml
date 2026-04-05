@@ -5,6 +5,10 @@ spring:
     name: AILoveBacked
   profiles:
     active: dev # 激活的环境
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 6MB
   datasource:
     url: jdbc:mysql://${ailove.datasource.host}:${ailove.datasource.port}/${ailove.datasource.database}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai
     username: ${ailove.datasource.username}
@@ -28,13 +32,7 @@ logging:
     root: info
     com.ablecisi.ailovebacked: debug
 
-aliyun:
-  oss:
-    endpoint: ${ailove.aliyun.oss.endpoint} # oss地址
-    accessKeyId: ${ailove.aliyun.oss.accessKeyId} # oss id
-    accessKeySecret: ${ailove.aliyun.oss.accessKeySecret} # oss密钥
-    bucketName: ${ailove.aliyun.oss.bucketName} # oss存储名
-    folderName: ${ailove.aliyun.oss.folderName} # oss存储的文件夹名
+# OSS 见各环境 profile 下 ailove.aliyun.oss（AliOssProperties）
 
 ailove:
   jwt:

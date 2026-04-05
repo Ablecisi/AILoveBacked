@@ -7,6 +7,7 @@ import com.ablecisi.ailovebacked.pojo.dto.UserDTO;
 import com.ablecisi.ailovebacked.pojo.dto.UserFollowDTO;
 import com.ablecisi.ailovebacked.pojo.vo.UserVO;
 import com.ablecisi.ailovebacked.result.Result;
+import com.ablecisi.ailovebacked.service.UserActivityService;
 import com.ablecisi.ailovebacked.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,10 +32,12 @@ import java.util.List;
 @Slf4j
 public class UserController {
     private final UserService userService;
+    private final UserActivityService userActivityService;
 
     @Autowired
-    public UserController(UserService userService) {
+    public UserController(UserService userService, UserActivityService userActivityService) {
         this.userService = userService;
+        this.userActivityService = userActivityService;
     }
 
     /**
@@ -115,10 +118,28 @@ public class UserController {
         return Result.success("获取成功", interests != null ? interests : List.of());
     }
 
+    /**
+     * 获取用户个人信息
+     *
+     * @return 用户信息
+     */
     @GetMapping("/profile")
     public Result<UserVO> getUserProfile() {
         log.info("获取用户个人信息");
         UserVO userVO = userService.getUserProfile();
         return Result.success("获取成功", userVO);
+    }
+
+    /**
+     * App 冷启动或进入前台时调用，用于 DAU 统计（同一用户同一天只计一次）。
+     */
+    @PostMapping("/activity/ping")
+    public Result<Void> activityPing() {
+        Long uid = BaseContext.getCurrentId();
+        if (uid == null) {
+            return Result.error("未登录或登录已失效");
+        }
+        userActivityService.touchCurrentUser(uid);
+        return Result.success();
     }
 }

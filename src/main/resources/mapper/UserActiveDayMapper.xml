@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ablecisi.ailovebacked.mapper.UserActiveDayMapper">
+
+    <insert id="upsert">
+        INSERT INTO user_active_day (user_id, active_date, first_seen_at)
+        VALUES (#{userId}, #{activeDate}, NOW())
+        ON DUPLICATE KEY UPDATE user_id = user_id
+    </insert>
+
+    <select id="countByActiveDateRange" resultType="com.ablecisi.ailovebacked.pojo.vo.admin.DauCountRow">
+        SELECT active_date AS activeDate, COUNT(*) AS cnt
+        FROM user_active_day
+        WHERE active_date BETWEEN #{start} AND #{end}
+        GROUP BY active_date
+        ORDER BY active_date ASC
+    </select>
+
+    <select id="countUsersOnDate" resultType="long">
+        SELECT COUNT(*)
+        FROM user_active_day
+        WHERE active_date = #{activeDate}
+    </select>
+</mapper>

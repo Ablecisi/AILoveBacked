@@ -3,6 +3,7 @@ package com.ablecisi.ailovebacked.utils;
 import com.alibaba.fastjson2.JSONObject;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.net.URI;
 import java.net.URLEncoder;
@@ -32,6 +33,11 @@ public final class HttpClientUtil {
      * 60 秒
      */
     private static final Duration DEFAULT_REQUEST_TIMEOUT = Duration.ofSeconds(60);
+
+    /**
+     * 流式接口（如 LLM SSE）单次请求可读上限，避免与默认 60s 冲突
+     */
+    private static final Duration STREAM_REQUEST_TIMEOUT = Duration.ofHours(6);
 
     /**
      * HTTP 客户端
@@ -108,6 +114,42 @@ public final class HttpClientUtil {
      */
     public static HttpResult postJsonRaw(String url, String jsonBody, Map<String, String> headers) {
         return execute("POST", url, jsonBody, withJsonContentType(headers));
+    }
+
+    /**
+     * POST JSON，返回响应体字节流（适用于 SSE/分块读取）。调用方必须在结束后关闭流。
+     * 非 2xx 时会读完错误正文后抛出 {@link UncheckedIOException}。
+     */
+    public static InputStream postJsonStream(String url, Object body, Map<String, String> headers) {
+        Objects.requireNonNull(url, "url");
+        String json = body instanceof String s ? s : JsonUtil.toJson(body);
+        Map<String, String> h = withJsonContentType(headers == null ? new LinkedHashMap<>() : new LinkedHashMap<>(headers));
+
+        try {
+            java.net.http.HttpRequest.Builder b = java.net.http.HttpRequest.newBuilder()
+                    .uri(URI.create(url))
+                    .timeout(STREAM_REQUEST_TIMEOUT)
+                    .POST(java.net.http.HttpRequest.BodyPublishers.ofString(json, StandardCharsets.UTF_8));
+            h.forEach(b::header);
+
+            java.net.http.HttpResponse<InputStream> resp = CLIENT.send(
+                    b.build(),
+                    java.net.http.HttpResponse.BodyHandlers.ofInputStream());
+            if (resp.statusCode() >= 200 && resp.statusCode() < 300) {
+                return resp.body();
+            }
+            try (InputStream err = resp.body()) {
+                if (err != null) {
+                    err.readAllBytes();
+                }
+            }
+            throw new UncheckedIOException(new IOException("HTTP " + resp.statusCode()));
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new HttpClientException("请求被中断: " + url, e);
+        } catch (IOException e) {
+            throw new UncheckedIOException("HTTP 流式请求失败: " + url, e);
+        }
     }
 
     // ——— PUT / PATCH / DELETE ———

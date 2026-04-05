@@ -28,5 +28,10 @@ public interface UserProfileMapper {
     java.util.List<UserProfile> selectPage(@Param("offset") int offset, @Param("size") int size);
 
     int deleteByUserId(@Param("userId") Long userId);
+
+    /**
+     * 驾驶舱兴趣关系图：仅拉取有 interests 字段的行
+     */
+    java.util.List<UserProfile> selectAllWithInterestsNotBlank();
 }
 

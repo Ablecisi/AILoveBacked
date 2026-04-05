@@ -18,4 +18,6 @@ public interface PromptTemplateMapper {
     int insert(PromptTemplate row);
 
     int updateById(PromptTemplate row);
+
+    long countAll();
 }

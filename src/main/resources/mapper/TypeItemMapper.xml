@@ -40,4 +40,9 @@
         FROM type
         WHERE id = #{id}
     </delete>
+
+    <select id="countAll" resultType="long">
+        SELECT COUNT(*)
+        FROM type
+    </select>
 </mapper>

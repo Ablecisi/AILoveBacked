@@ -317,10 +317,14 @@
         c.user_id AS userId,
         u.name AS userName,
         c.parent_id AS parentId,
+        c.root_id AS rootId,
+        c.path AS path,
+        c.depth AS depth,
         c.like_count AS likeCount,
         c.reply_count AS replyCount,
         (c.is_deleted = 1) AS deleted,
-        c.create_time AS createTime
+        c.create_time AS createTime,
+        c.update_time AS updateTime
         FROM comment c
         LEFT JOIN user u ON u.id = c.user_id
         <where>

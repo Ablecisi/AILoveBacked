@@ -18,4 +18,6 @@ public interface AppTypeMapper {
     int updateRow(TypeItem row);
 
     int deleteById(@Param("id") Long id);
+
+    long countAll();
 }

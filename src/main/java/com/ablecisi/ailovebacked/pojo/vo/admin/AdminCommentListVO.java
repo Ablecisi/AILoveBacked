@@ -13,8 +13,12 @@ public class AdminCommentListVO {
     private Long userId;
     private String userName;
     private Long parentId;
+    private Long rootId;
+    private String path;
+    private Integer depth;
     private Integer likeCount;
     private Integer replyCount;
     private Boolean deleted;
     private LocalDateTime createTime;
+    private LocalDateTime updateTime;
 }

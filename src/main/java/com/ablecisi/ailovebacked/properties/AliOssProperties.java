@@ -18,4 +18,13 @@ public class AliOssProperties {
     private String bucketName; // oss存储空间
     private String folderName; // oss文件夹名称
 
+    /**
+     * 可选。绑定 CDN 或自定义域名时填写（无尾斜杠），返回给前端的 url = publicBaseUrl + "/" + objectKey
+     */
+    private String publicBaseUrl;
+
+    /**
+     * 管理端单图最大字节，默认 5MiB；0 表示使用服务内建默认
+     */
+    private long maxImageBytes = 5L * 1024 * 1024;
 }

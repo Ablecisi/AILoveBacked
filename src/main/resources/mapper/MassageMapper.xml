@@ -100,10 +100,12 @@
         m.conversation_id AS conversationId,
         m.user_id AS userId,
         m.type,
-        LEFT(m.content, 500) AS contentPreview,
+        m.content AS content,
         m.emotion,
         m.confidence,
-        m.create_time AS createTime
+        m.is_read AS isRead,
+        m.create_time AS createTime,
+        m.update_time AS updateTime
         FROM message m
         <where>
             <if test="conversationId != null">
