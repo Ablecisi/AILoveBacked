@@ -1,10 +1,8 @@
 package com.ablecisi.ailovebacked.interceptor;
 
-import com.ablecisi.ailovebacked.constant.JwtClaimsConstant;
 import com.ablecisi.ailovebacked.constant.MessageConstant;
 import com.ablecisi.ailovebacked.constant.StatusCodeConstant;
-import com.ablecisi.ailovebacked.context.BaseContext;
-import com.ablecisi.ailovebacked.properties.JwtProperties;
+import com.ablecisi.ailovebacked.properties.AdminJwtProperties;
 import com.ablecisi.ailovebacked.result.Result;
 import com.ablecisi.ailovebacked.utils.JwtUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -12,7 +10,9 @@ import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.method.HandlerMethod;
@@ -22,52 +22,50 @@ import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
 /**
- * jwt令牌校验的拦截器（失败时 HTTP 401 + JSON，body.code 使用 TOKEN_EXPIRED 等以兼容客户端）
+ * 管理端 JWT 校验（与 {@link JwtTokenUserInterceptor} 同属 MVC 拦截器，只作用于 /admin/api/**，不影响 C 端 /api/**）。
+ * 令牌：Authorization: Bearer &lt;token&gt;，密钥见 ailove.admin.jwt-secret-key。
  */
 @Component
 @Slf4j
-public class JwtTokenUserInterceptor implements HandlerInterceptor {
+@RequiredArgsConstructor
+public class JwtTokenAdminInterceptor implements HandlerInterceptor {
 
-    private final JwtProperties jwtProperties;
+    private final AdminJwtProperties adminJwtProperties;
     private final ObjectMapper objectMapper;
 
-    public JwtTokenUserInterceptor(JwtProperties jwtProperties, ObjectMapper objectMapper) {
-        this.jwtProperties = jwtProperties;
-        this.objectMapper = objectMapper;
-    }
-
+    @Override
     public boolean preHandle(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull Object handler) {
-        if (isAnonymousUserPath(request)) {
+        if (isAnonymousAdminPath(request)) {
             return true;
         }
         if (!(handler instanceof HandlerMethod)) {
-            log.debug("非 Controller 方法，放行");
             return true;
         }
 
-        String token = request.getHeader(jwtProperties.getUserTokenName());
-
+        String header = request.getHeader(HttpHeaders.AUTHORIZATION);
         try {
-            if (token == null || token.isEmpty()) {
-                writeUnauthorized(response, StatusCodeConstant.TOKEN_EXPIRED, MessageConstant.USER_NOT_LOGIN);
+            if (header == null || !header.startsWith("Bearer ")) {
+                writeUnauthorized(response);
                 return false;
             }
-
-            Claims claims = JwtUtil.parseJWT(jwtProperties.getUserSecretKey(), token);
+            String token = header.substring(7).trim();
+            Claims claims = JwtUtil.parseJWT(adminJwtProperties.getJwtSecretKey(), token);
             Date expiration = claims.getExpiration();
-            if (expiration == null || expiration.before(new Date())) {
-                writeUnauthorized(response, StatusCodeConstant.TOKEN_EXPIRED, MessageConstant.USER_NOT_LOGIN);
+            if (expiration != null && expiration.before(new Date())) {
+                writeUnauthorized(response);
                 return false;
             }
-
-            Long userId = Long.valueOf(claims.get(JwtClaimsConstant.USER_ID).toString());
-            BaseContext.setCurrentId(userId);
-            log.debug("jwt 校验通过 userId={}", userId);
+            String subject = claims.getSubject();
+            if (subject == null || subject.isEmpty()) {
+                writeUnauthorized(response);
+                return false;
+            }
+            log.debug("admin jwt ok, sub={}", subject);
             return true;
         } catch (Exception ex) {
-            log.warn("jwt 校验失败: {}", ex.getMessage());
+            log.warn("admin jwt 校验失败: {}", ex.getMessage());
             try {
-                writeUnauthorized(response, StatusCodeConstant.TOKEN_EXPIRED, MessageConstant.USER_NOT_LOGIN);
+                writeUnauthorized(response);
             } catch (Exception e) {
                 log.error("写入 401 响应失败", e);
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
@@ -76,22 +74,14 @@ public class JwtTokenUserInterceptor implements HandlerInterceptor {
         }
     }
 
-    /**
-     * C 端无需登录的接口（与 {@code WebMvcConfiguration} 中 excludePathPatterns 保持一致）。
-     * 单独判断可避免部分环境下路径匹配与 exclude 不一致导致登录仍被拦截（如尾随斜杠、网关改写 URI 等）。
-     */
-    private boolean isAnonymousUserPath(HttpServletRequest request) {
+    private boolean isAnonymousAdminPath(HttpServletRequest request) {
         if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
             return true;
         }
         String path = normalizedPathWithinContext(request);
-        return "/api/user/login".equals(path)
-                || "/api/app/bootstrap".equals(path);
+        return "/admin/api/v1/auth/login".equals(path);
     }
 
-    /**
-     * 去掉 context-path 与末尾斜杠，便于白名单比对
-     */
     private static String normalizedPathWithinContext(HttpServletRequest request) {
         String uri = request.getRequestURI();
         String ctx = request.getContextPath();
@@ -107,14 +97,11 @@ public class JwtTokenUserInterceptor implements HandlerInterceptor {
         return uri;
     }
 
-    /**
-     * 401 响应
-     */
-    private void writeUnauthorized(HttpServletResponse response, int bodyCode, String message) throws Exception {
+    private void writeUnauthorized(HttpServletResponse response) throws Exception {
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         response.setCharacterEncoding(StandardCharsets.UTF_8.name());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-        Result<Object> body = Result.error(bodyCode, message, null);
+        Result<Object> body = Result.error(StatusCodeConstant.TOKEN_EXPIRED, MessageConstant.USER_NOT_LOGIN, null);
         objectMapper.writeValue(response.getWriter(), body);
     }
 }

@@ -1,5 +1,6 @@
 package com.ablecisi.ailovebacked.config;
 
+import com.ablecisi.ailovebacked.interceptor.JwtTokenAdminInterceptor;
 import com.ablecisi.ailovebacked.interceptor.JwtTokenUserInterceptor;
 import com.ablecisi.ailovebacked.json.JacksonObjectMapper;
 import lombok.extern.slf4j.Slf4j;
@@ -19,10 +20,14 @@ import java.util.List;
 @Slf4j
 public class WebMvcConfiguration extends WebMvcConfigurationSupport {
     private final JwtTokenUserInterceptor jwtTokenUserInterceptor;
+    private final JwtTokenAdminInterceptor jwtTokenAdminInterceptor;
 
     @Autowired
-    public WebMvcConfiguration(JwtTokenUserInterceptor jwtTokenUserInterceptor) {
+    public WebMvcConfiguration(
+            JwtTokenUserInterceptor jwtTokenUserInterceptor,
+            JwtTokenAdminInterceptor jwtTokenAdminInterceptor) {
         this.jwtTokenUserInterceptor = jwtTokenUserInterceptor;
+        this.jwtTokenAdminInterceptor = jwtTokenAdminInterceptor;
     }
 
     /**
@@ -31,13 +36,20 @@ public class WebMvcConfiguration extends WebMvcConfigurationSupport {
      * @param registry 拦截器注册对象
      */
     protected void addInterceptors(InterceptorRegistry registry) {
-        log.info("开始注册用户端拦截器...");
+        log.info("注册 C 端 JWT 拦截器: /api/**");
         registry.addInterceptor(jwtTokenUserInterceptor)
                 .addPathPatterns("/api/**")
                 .excludePathPatterns(
                         "/api/user/login",
-                        "/api/app/bootstrap"
-                );
+                        "/api/user/login/",
+                        "/api/app/bootstrap",
+                        "/api/app/bootstrap/");
+        log.info("注册管理端 JWT 拦截器: /admin/api/**");
+        registry.addInterceptor(jwtTokenAdminInterceptor)
+                .addPathPatterns("/admin/api/**")
+                .excludePathPatterns(
+                        "/admin/api/v1/auth/login",
+                        "/admin/api/v1/auth/login/");
     }
 
     /**
