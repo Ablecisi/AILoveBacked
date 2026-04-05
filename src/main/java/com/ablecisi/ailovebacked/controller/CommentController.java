@@ -1,5 +1,6 @@
 package com.ablecisi.ailovebacked.controller;
 
+import com.ablecisi.ailovebacked.context.BaseContext;
 import com.ablecisi.ailovebacked.pojo.dto.CreateCommentDTO;
 import com.ablecisi.ailovebacked.pojo.dto.LikeDTO;
 import com.ablecisi.ailovebacked.pojo.dto.UpdateCommentDTO;
@@ -175,8 +176,12 @@ public class CommentController {
      */
     @PostMapping("/like")
     public Result<Boolean> like(@RequestBody @Valid LikeDTO dto) {
-        log.info("点赞评论: {}", dto);
-        boolean ok = commentService.like(dto.getUserId(), dto.getCommentId());
+        Long uid = BaseContext.getCurrentId();
+        if (uid == null) {
+            return Result.error("未登录或 token 无效");
+        }
+        log.info("点赞评论: commentId={}, userId={}", dto.getCommentId(), uid);
+        boolean ok = commentService.like(uid, dto.getCommentId());
         return ok ? Result.success("点赞成功", true) : Result.success("已点赞过", false);
     }
 
@@ -188,8 +193,12 @@ public class CommentController {
      */
     @PostMapping("/unlike")
     public Result<Boolean> unlike(@RequestBody @Valid LikeDTO dto) {
-        log.info("取消点赞评论: {}", dto);
-        boolean ok = commentService.unlike(dto.getUserId(), dto.getCommentId());
+        Long uid = BaseContext.getCurrentId();
+        if (uid == null) {
+            return Result.error("未登录或 token 无效");
+        }
+        log.info("取消点赞评论: commentId={}, userId={}", dto.getCommentId(), uid);
+        boolean ok = commentService.unlike(uid, dto.getCommentId());
         return ok ? Result.success("取消点赞成功", true) : Result.success("原本未点赞", false);
     }
 }

@@ -2,6 +2,7 @@ package com.ablecisi.ailovebacked.controller;
 
 import com.ablecisi.ailovebacked.context.BaseContext;
 import com.ablecisi.ailovebacked.pojo.dto.ChatSendDTO;
+import com.ablecisi.ailovebacked.pojo.dto.OpenConversationDTO;
 import com.ablecisi.ailovebacked.pojo.vo.ChatReplyVO;
 import com.ablecisi.ailovebacked.pojo.vo.ConversationVO;
 import com.ablecisi.ailovebacked.pojo.vo.MessageVO;
@@ -115,6 +116,15 @@ public class DialogController {
     public Result<List<ConversationVO>> myConversations(@RequestParam(defaultValue = "1") int page,
                                                         @RequestParam(defaultValue = "50") int size) {
         return Result.success(dialogService.listMyConversations(page, size, BaseContext.getCurrentId()));
+    }
+
+    /**
+     * 创建会话：选择角色并可选填写标题、场景背景。
+     */
+    @PostMapping("/conversation/open")
+    public Result<ConversationVO> openConversation(@RequestBody @Valid OpenConversationDTO dto) {
+        log.info("用户 {} 创建会话 characterId={}", BaseContext.getCurrentId(), dto.getCharacterId());
+        return Result.success(dialogService.openConversation(BaseContext.getCurrentId(), dto));
     }
 }
 

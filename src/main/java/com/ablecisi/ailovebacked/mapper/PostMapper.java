@@ -20,4 +20,24 @@ public interface PostMapper {
     int updateRow(Post row);
 
     int deleteById(@Param("id") Long id);
+
+    /**
+     * 新增一条评论时 post.comment_count +1
+     */
+    int incrementCommentCount(@Param("id") Long id);
+
+    /**
+     * 软删除一条评论时 post.comment_count -1（不低于 0）
+     */
+    int decrementCommentCount(@Param("id") Long id);
+
+    int adjustCommentCount(@Param("id") Long id, @Param("delta") int delta);
+
+    int incrementLikeCount(@Param("id") Long id);
+
+    int decrementLikeCount(@Param("id") Long id);
+
+    int incrementShareCount(@Param("id") Long id);
+
+    int incrementViewCount(@Param("id") Long id);
 }

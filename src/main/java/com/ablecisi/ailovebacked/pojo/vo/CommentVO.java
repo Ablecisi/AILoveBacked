@@ -35,7 +35,15 @@ public class CommentVO implements Serializable {
     private Long rootId;
     private Integer depth;
     private Integer likeCount;
+    /**
+     * 当前登录用户是否已点赞该条评论（未登录为 false）
+     */
+    private Boolean liked;
     private Integer replyCount;
+    /**
+     * 该根评论下全部子孙条数（不含根自身）；仅顶层列表查询填充，用于客户端「展开 N 条回复」。
+     */
+    private Integer descendantCount;
 
     private Boolean deleted;    // 用 Boolean 替代 is_deleted，语义更清晰
     private LocalDateTime createTime;

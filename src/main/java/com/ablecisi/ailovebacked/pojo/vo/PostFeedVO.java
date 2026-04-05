@@ -24,4 +24,8 @@ public class PostFeedVO {
     private Integer shareCount;
     private LocalDateTime createdAt;
     private Boolean liked;
+    /**
+     * 当前登录用户是否已关注作者；未登录或无上下文时为 null
+     */
+    private Boolean authorFollowed;
 }

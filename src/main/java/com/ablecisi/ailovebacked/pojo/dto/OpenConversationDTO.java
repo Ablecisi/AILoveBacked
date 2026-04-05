@@ -18,5 +18,12 @@ import lombok.Data;
 public class OpenConversationDTO {
     @NotNull
     private Long characterId;
-    private String title; // 可选
+    /**
+     * 可选；为空时用角色名生成默认标题
+     */
+    private String title;
+    /**
+     * 可选；会话场景与背景，写入 conversation.scene_background
+     */
+    private String sceneBackground;
 }

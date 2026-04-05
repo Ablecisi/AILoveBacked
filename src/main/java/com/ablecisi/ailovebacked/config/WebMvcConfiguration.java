@@ -43,6 +43,7 @@ public class WebMvcConfiguration extends WebMvcConfigurationSupport {
                         "/api/user/login",
                         "/api/app/bootstrap",
                         "/api/post/feed",
+                        "/api/post/detail",
                         "/api/article/view");
         log.info("注册管理端 JWT 拦截器: /admin/api/**");
         registry.addInterceptor(jwtTokenAdminInterceptor)

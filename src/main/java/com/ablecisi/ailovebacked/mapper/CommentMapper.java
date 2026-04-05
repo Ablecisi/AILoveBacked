@@ -69,10 +69,23 @@ public interface CommentMapper {
 
     int softDelete(@Param("id") Long id);
 
+    /**
+     * 软删除指定结点及其 path 下全部子孙（同 root_id 树内）；path 为空时改用 softDelete 单条。
+     */
+    int softDeleteSubtree(@Param("rootId") Long rootId,
+                          @Param("path") String path,
+                          @Param("id") Long id);
+
     // ===== 点赞 =====
     int insertLike(@Param("userId") Long userId, @Param("commentId") Long commentId);
 
     int deleteLike(@Param("userId") Long userId, @Param("commentId") Long commentId);
+
+    /**
+     * 在给定评论 id 中，返回当前用户已点赞的 id 列表
+     */
+    List<Long> selectLikedCommentIds(@Param("userId") Long userId,
+                                     @Param("commentIds") List<Long> commentIds);
 
     int incLikeCount(@Param("id") Long id);
 

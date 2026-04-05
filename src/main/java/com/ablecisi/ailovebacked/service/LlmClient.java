@@ -23,16 +23,22 @@ public class LlmClient {
     private final String apiKey;
     private final String baseUrl;
     private final String model;
+    /**
+     * 是否在 content 为空时回退到 reasoning_content
+     */
+    private final boolean includeReasoningContent;
 
     private final AtomicInteger tokensUsed = new AtomicInteger(0);
 
     public LlmClient(
             @Value("${llm.apiKey}") String apiKey,
             @Value("${llm.endpoint}") String baseUrl,
-            @Value("${llm.provider}") String model) {
+            @Value("${llm.provider}") String model,
+            @Value("${llm.include-reasoning-content:false}") boolean includeReasoningContent) {
         this.apiKey = apiKey;
         this.baseUrl = baseUrl;
         this.model = model;
+        this.includeReasoningContent = includeReasoningContent;
     }
 
     /**
@@ -68,13 +74,12 @@ public class LlmClient {
                 Map<String, Object> first = choices.get(0);
                 @SuppressWarnings("unchecked")
                 Map<String, Object> message = (Map<String, Object>) first.get("message");
-                Object content = message == null ? null : message.get("content");
                 @SuppressWarnings("unchecked")
                 Map<String, Object> usage = (Map<String, Object>) result.get("usage");
                 if (usage != null && usage.get("total_tokens") != null) {
                     tokensUsed.addAndGet(((Number) usage.get("total_tokens")).intValue());
                 }
-                return content == null ? "" : String.valueOf(content);
+                return assistantMessageText(message, includeReasoningContent);
             }
         } catch (BaseException e) {
             throw e;
@@ -139,6 +144,48 @@ public class LlmClient {
         return sb.toString();
     }
 
+    /**
+     * 非流式 message 对象：优先正文 {@code content}；{@code reasoning_content} 受配置开关控制。
+     */
+    private static String assistantMessageText(Map<String, Object> message, boolean includeReasoning) {
+        if (message == null) {
+            return "";
+        }
+        String c = scalarToText(message.get("content"));
+        if (!c.isEmpty()) {
+            return c;
+        }
+        if (!includeReasoning) {
+            return "";
+        }
+        return scalarToText(message.get("reasoning_content"));
+    }
+
+    /**
+     * 流式 delta：合并可展示片段；绝不回传整行 {@code data: {...}} JSON。
+     */
+    private static String deltaToText(Map<String, Object> delta, boolean includeReasoning) {
+        if (delta == null || delta.isEmpty()) {
+            return "";
+        }
+        String c = scalarToText(delta.get("content"));
+        if (!c.isEmpty()) {
+            return c;
+        }
+        if (!includeReasoning) {
+            return "";
+        }
+        return scalarToText(delta.get("reasoning_content"));
+    }
+
+    private static String scalarToText(Object v) {
+        if (v == null) {
+            return "";
+        }
+        String s = String.valueOf(v);
+        return "null".equals(s) ? "" : s;
+    }
+
     @SuppressWarnings("unchecked")
     private String parseDelta(String line) {
         try {
@@ -150,29 +197,34 @@ public class LlmClient {
                 Map<String, Object> m = JSON.parseObject(s, new TypeReference<Map<String, Object>>() {
                 });
                 if (m == null) {
-                    return line;
+                    return "";
                 }
                 List<Map<String, Object>> choices = (List<Map<String, Object>>) (List<?>) m.get("choices");
                 if (choices != null && !choices.isEmpty()) {
                     Map<String, Object> first = choices.get(0);
                     Map<String, Object> delta = (Map<String, Object>) first.get("delta");
-                    if (delta != null && delta.get("content") != null) {
-                        return String.valueOf(delta.get("content"));
+                    String fromDelta = deltaToText(delta, includeReasoningContent);
+                    if (!fromDelta.isEmpty()) {
+                        return fromDelta;
                     }
                     Map<String, Object> message = (Map<String, Object>) first.get("message");
-                    if (message != null && message.get("content") != null) {
-                        return String.valueOf(message.get("content"));
+                    if (message != null) {
+                        String fromMsg = assistantMessageText(message, includeReasoningContent);
+                        if (!fromMsg.isEmpty()) {
+                            return fromMsg;
+                        }
                     }
                 }
                 Map<String, Object> usage = (Map<String, Object>) m.get("usage");
                 if (usage != null && usage.get("total_tokens") != null) {
                     tokensUsed.addAndGet(((Number) usage.get("total_tokens")).intValue());
                 }
+                return "";
             }
         } catch (Exception ignore) {
-            // 兜底走下方
+            // 非 JSON 行忽略
         }
-        return line;
+        return "";
     }
 
     public int tokensUsed() {

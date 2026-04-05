@@ -34,6 +34,7 @@
         <result column="depth" property="depth"/>
         <result column="like_count" property="likeCount"/>
         <result column="reply_count" property="replyCount"/>
+        <result column="descendant_count" property="descendantCount"/>
         <result column="deleted" property="deleted"/>
         <result column="create_time" property="createTime"/>
         <!-- ★ 新增 -->
@@ -101,6 +102,8 @@
         ELSE NULLIF(TRIM(COALESCE(pu.name, pu.username, '')), '') END AS parent_user_name,
         c.root_id, c.depth,
         c.like_count, c.reply_count,
+        (SELECT COUNT(1) FROM comment sc
+        WHERE sc.root_id = c.id AND sc.id != c.id AND sc.is_deleted = 0) AS descendant_count,
         (c.is_deleted=1) AS deleted,
         c.create_time,
         c.path AS path_cursor      <!-- ★ 新增 -->
@@ -141,6 +144,8 @@
         ELSE NULLIF(TRIM(COALESCE(pu.name, pu.username, '')), '') END AS parent_user_name,
         c.root_id, c.depth,
         c.like_count, c.reply_count,
+        (SELECT COUNT(1) FROM comment sc
+        WHERE sc.root_id = c.id AND sc.id != c.id AND sc.is_deleted = 0) AS descendant_count,
         (c.is_deleted=1) AS deleted,
         c.create_time,
         c.path AS path_cursor      <!-- ★ 新增 -->
@@ -241,6 +246,20 @@
         SET is_deleted  = 1,
             update_time = NOW()
         WHERE id = #{id}
+          AND is_deleted = 0
+    </update>
+
+    <!-- 同一棵树内：目标 id 及其 path 前缀下所有后代 -->
+    <update id="softDeleteSubtree">
+        UPDATE comment
+        SET is_deleted  = 1,
+            update_time = NOW()
+        WHERE is_deleted = 0
+          AND root_id = #{rootId}
+          AND (
+            id = #{id}
+                OR path LIKE CONCAT(#{path}, '/%')
+            )
     </update>
 
     <!-- ===== 点赞（幂等）===== -->
@@ -257,6 +276,16 @@
         WHERE user_id = #{userId}
           AND comment_id = #{commentId}
     </delete>
+
+    <select id="selectLikedCommentIds" resultType="long">
+        SELECT comment_id
+        FROM comment_like_relation
+        WHERE user_id = #{userId}
+        AND comment_id IN
+        <foreach collection="commentIds" item="cid" open="(" separator="," close=")">
+            #{cid}
+        </foreach>
+    </select>
 
     <update id="incLikeCount">
         UPDATE comment

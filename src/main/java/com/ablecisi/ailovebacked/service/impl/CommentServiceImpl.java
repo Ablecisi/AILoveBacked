@@ -1,7 +1,9 @@
 package com.ablecisi.ailovebacked.service.impl;
 
 import com.ablecisi.ailovebacked.context.BaseContext;
+import com.ablecisi.ailovebacked.mapper.ArticleMapper;
 import com.ablecisi.ailovebacked.mapper.CommentMapper;
+import com.ablecisi.ailovebacked.mapper.PostMapper;
 import com.ablecisi.ailovebacked.pojo.dto.CreateCommentDTO;
 import com.ablecisi.ailovebacked.pojo.dto.UpdateCommentDTO;
 import com.ablecisi.ailovebacked.pojo.entity.Comment;
@@ -14,10 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * AILoveBacked <br>
@@ -34,6 +33,8 @@ import java.util.Map;
 public class CommentServiceImpl implements CommentService {
 
     private final CommentMapper commentMapper;
+    private final ArticleMapper articleMapper;
+    private final PostMapper postMapper;
 
     /**
      * 创建评论
@@ -79,8 +80,15 @@ public class CommentServiceImpl implements CommentService {
             commentMapper.fillTreeForChild(newId, root, newPath, newDepth); // 回填树字段
             commentMapper.incReplyCount(parent.getId()); // 父评论回复数 +1
         }
+        if ("article".equals(dto.getTargetType())) {
+            articleMapper.incrementCommentCount(dto.getTargetId());
+        } else {
+            postMapper.incrementCommentCount(dto.getTargetId());
+        }
         // ★ 直接返回 CommentVO（含用户信息/软删文案）
-        return commentMapper.selectVOById(newId);
+        CommentVO created = commentMapper.selectVOById(newId);
+        fillLikedFlags(List.of(created));
+        return created;
     }
 
     /**
@@ -95,7 +103,9 @@ public class CommentServiceImpl implements CommentService {
     @Override
     public List<CommentVO> pageTopByArticle(Long articleId, String sort, int page, int size) {
         int offset = Math.max(page - 1, 0) * size;
-        return commentMapper.pageTopByArticle(articleId, sort, offset, size);
+        List<CommentVO> list = commentMapper.pageTopByArticle(articleId, sort, offset, size);
+        fillLikedFlags(list);
+        return list;
     }
 
     /**
@@ -121,7 +131,9 @@ public class CommentServiceImpl implements CommentService {
     @Override
     public List<CommentVO> pageTopByPost(Long postId, String sort, int page, int size) {
         int offset = Math.max(page - 1, 0) * size;
-        return commentMapper.pageTopByPost(postId, sort, offset, size);
+        List<CommentVO> list = commentMapper.pageTopByPost(postId, sort, offset, size);
+        fillLikedFlags(list);
+        return list;
     }
 
     /**
@@ -145,7 +157,9 @@ public class CommentServiceImpl implements CommentService {
      */
     @Override
     public List<CommentVO> listTreeByRoot(Long rootId, String afterPath, int size) {
-        return commentMapper.listTreeByRoot(rootId, afterPath, size);
+        List<CommentVO> list = commentMapper.listTreeByRoot(rootId, afterPath, size);
+        fillLikedFlags(list);
+        return list;
     }
 
     /**
@@ -176,9 +190,12 @@ public class CommentServiceImpl implements CommentService {
         }
         if (roots.isEmpty()) return new PageResult<>(0, List.of());
 
+        fillLikedFlags(roots);
+
         // 2) 一次SQL批量查这一页所有root的子孙
         List<Long> rootIds = roots.stream().map(CommentVO::getRootId).toList();
         List<CommentVO> allDesc = commentMapper.listDescendantsByRoots(rootIds, maxDepth);
+        fillLikedFlags(allDesc);
 
         // 3) 分组组装（按 rootId）
         Map<Long, List<CommentVO>> grouped = new LinkedHashMap<>();
@@ -207,7 +224,9 @@ public class CommentServiceImpl implements CommentService {
     @Override
     public List<CommentVO> pageChildren(Long parentId, int page, int size) {
         int offset = Math.max(page - 1, 0) * size;
-        return commentMapper.pageChildren(parentId, offset, size);
+        List<CommentVO> list = commentMapper.pageChildren(parentId, offset, size);
+        fillLikedFlags(list);
+        return list;
     }
 
     /**
@@ -233,14 +252,42 @@ public class CommentServiceImpl implements CommentService {
     }
 
     /**
-     * 软删除评论
+     * 软删除评论：级联软删该结点及同树下全部子孙；article/post.comment_count 按实际删除条数减少；
+     * 仅对被删顶结点的直接父评论 reply_count -1（与创建时 inc 对称）。
      *
      * @param id 评论ID
-     * @return int 受影响行数
+     * @return int 实际软删条数（已删或不存在为 0）
      */
+    @Transactional
     @Override
     public int softDelete(Long id) {
-        return commentMapper.softDelete(id);
+        if (id == null) {
+            return 0;
+        }
+        Comment c = commentMapper.selectById(id);
+        if (c == null || Boolean.TRUE.equals(c.getIsDeleted())) {
+            return 0;
+        }
+        Long treeRootId = c.getRootId() != null ? c.getRootId() : c.getId();
+        String path = c.getPath();
+        int n;
+        if (path != null && !path.isEmpty()) {
+            n = commentMapper.softDeleteSubtree(treeRootId, path, id);
+        } else {
+            n = commentMapper.softDelete(id);
+        }
+        if (n == 0) {
+            return 0;
+        }
+        if (c.getParentId() != null) {
+            commentMapper.decReplyCount(c.getParentId());
+        }
+        if (c.getArticleId() != null) {
+            articleMapper.adjustCommentCount(c.getArticleId(), -n);
+        } else if (c.getPostId() != null) {
+            postMapper.adjustCommentCount(c.getPostId(), -n);
+        }
+        return n;
     }
 
     /**
@@ -277,6 +324,32 @@ public class CommentServiceImpl implements CommentService {
             return true;
         }
         return false;
+    }
+
+    private void fillLikedFlags(List<CommentVO> list) {
+        if (list == null || list.isEmpty()) {
+            return;
+        }
+        Long uid = BaseContext.getCurrentId();
+        if (uid == null) {
+            for (CommentVO vo : list) {
+                vo.setLiked(Boolean.FALSE);
+            }
+            return;
+        }
+        List<Long> ids = list.stream()
+                .map(CommentVO::getId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+        if (ids.isEmpty()) {
+            return;
+        }
+        List<Long> likedIds = commentMapper.selectLikedCommentIds(uid, ids);
+        Set<Long> likedSet = new HashSet<>(likedIds);
+        for (CommentVO vo : list) {
+            vo.setLiked(vo.getId() != null && likedSet.contains(vo.getId()));
+        }
     }
 
     /**

@@ -6,6 +6,7 @@ import com.ablecisi.ailovebacked.mapper.AiCharacterMapper;
 import com.ablecisi.ailovebacked.mapper.ConversationMapper;
 import com.ablecisi.ailovebacked.mapper.EmotionLogMapper;
 import com.ablecisi.ailovebacked.pojo.dto.ChatSendDTO;
+import com.ablecisi.ailovebacked.pojo.dto.OpenConversationDTO;
 import com.ablecisi.ailovebacked.pojo.entity.Conversation;
 import com.ablecisi.ailovebacked.pojo.entity.EmotionLog;
 import com.ablecisi.ailovebacked.pojo.entity.Message;
@@ -51,7 +52,7 @@ public class DialogService {
     private final AiCharacterMapper aiCharacterMapper;
     private final ConversationMapper conversationMapper;
 
-    private void assertUserOwnsConversation(Long conversationId, Long userId) {
+    private Conversation requireOwnedConversation(Long conversationId, Long userId) {
         Conversation c = conversationMapper.selectById(conversationId);
         if (c == null) {
             throw new BaseException("会话不存在");
@@ -59,13 +60,10 @@ public class DialogService {
         if (!c.getUserId().equals(userId)) {
             throw new ForbiddenException("无权访问该会话");
         }
+        return c;
     }
 
-    private void assertCharacterMatchesConversation(Long conversationId, Long characterId) {
-        Conversation c = conversationMapper.selectById(conversationId);
-        if (c == null) {
-            throw new BaseException("会话不存在");
-        }
+    private static void assertCharacterMatches(Conversation c, Long characterId) {
         if (!c.getCharacterId().equals(characterId)) {
             throw new BaseException("角色与会话不匹配");
         }
@@ -74,8 +72,9 @@ public class DialogService {
     @Transactional
     public ChatReplyVO handleUserMessage(ChatSendDTO dto) {
         userApiRateLimiter.assertChatSendAllowed(dto.getUserId());
-        assertUserOwnsConversation(dto.getConversationId(), dto.getUserId());
-        assertCharacterMatchesConversation(dto.getConversationId(), dto.getCharacterId());
+        Conversation conv = requireOwnedConversation(dto.getConversationId(), dto.getUserId());
+        assertCharacterMatches(conv, dto.getCharacterId());
+        String sessionScene = conv.getSceneBackground();
         // 1. 保存用户消息
         Message um = messageService.saveUserMessage(dto.getConversationId(), dto.getUserId(), dto.getText());
 
@@ -91,7 +90,7 @@ public class DialogService {
         String lastDialogue = messageService.briefContext(dto.getConversationId(), 8);
 
         // 5. Prompt 渲染（角色 + 画像 + 情绪 + 历史 + 用户文本）
-        String prompt = promptService.renderWithCharacter(dto.getCharacterId(), emo, profileBrief, lastDialogue, dto.getText());
+        String prompt = promptService.renderWithCharacter(dto.getCharacterId(), emo, profileBrief, lastDialogue, dto.getText(), dto.getUserId(), sessionScene);
 
         // 6. 调 LLM（非流式；如需流式改用 generateStream）
         String reply = llmClient.generate(prompt);
@@ -120,15 +119,16 @@ public class DialogService {
     @Transactional
     public ChatReplyVO handleUserMessageStream(ChatSendDTO dto, Consumer<String> onDelta) throws IOException {
         userApiRateLimiter.assertChatSendAllowed(dto.getUserId());
-        assertUserOwnsConversation(dto.getConversationId(), dto.getUserId());
-        assertCharacterMatchesConversation(dto.getConversationId(), dto.getCharacterId());
+        Conversation conv = requireOwnedConversation(dto.getConversationId(), dto.getUserId());
+        assertCharacterMatches(conv, dto.getCharacterId());
+        String sessionScene = conv.getSceneBackground();
         Message um = messageService.saveUserMessage(dto.getConversationId(), dto.getUserId(), dto.getText());
         var emo = emotionClient.detect(dto.getText());
         messageService.updateEmotion(um.getId(), emo);
         recordEmotionLog(dto.getUserId(), um.getId(), emo);
         String profileBrief = profileService.updateAndSummarize(dto.getUserId(), emo.getEmotion());
         String lastDialogue = messageService.briefContext(dto.getConversationId(), 8);
-        String prompt = promptService.renderWithCharacter(dto.getCharacterId(), emo, profileBrief, lastDialogue, dto.getText());
+        String prompt = promptService.renderWithCharacter(dto.getCharacterId(), emo, profileBrief, lastDialogue, dto.getText(), dto.getUserId(), sessionScene);
 
         String reply = llmClient.generateStream(prompt, onDelta);
 
@@ -147,7 +147,7 @@ public class DialogService {
     }
 
     public List<MessageVO> listMessages(Long conversationId, int page, int size, Long currentUserId) {
-        assertUserOwnsConversation(conversationId, currentUserId);
+        requireOwnedConversation(conversationId, currentUserId);
         int offset = (page - 1) * size;
         List<MessageVO> ml = messageService.pageByConversation(conversationId, page, size, offset);
         // 倒序改正序
@@ -179,5 +179,52 @@ public class DialogService {
         }
         int offset = (page - 1) * size;
         return conversationMapper.pageByUser(userId, page, size, offset);
+    }
+
+    /**
+     * 创建新会话：绑定角色与可选场景背景。
+     */
+    @Transactional
+    public ConversationVO openConversation(Long userId, OpenConversationDTO dto) {
+        if (userId == null) {
+            throw new ForbiddenException("未登录");
+        }
+        AiCharacterVO ch = aiCharacterMapper.selectById(dto.getCharacterId());
+        if (ch == null) {
+            throw new BaseException("角色不存在");
+        }
+        if (ch.getUserId() != null && !ch.getUserId().equals(userId)) {
+            throw new ForbiddenException("无权使用该角色");
+        }
+        if (ch.getStatus() != null && ch.getStatus() == 0) {
+            throw new BaseException("角色已下线");
+        }
+        String title = dto.getTitle();
+        if (title == null || title.isBlank()) {
+            title = (ch.getName() != null && !ch.getName().isBlank())
+                    ? ch.getName() + " 的对话"
+                    : "新对话";
+        }
+        String scene = dto.getSceneBackground();
+        if (scene != null) {
+            scene = scene.trim();
+            if (scene.isEmpty()) {
+                scene = null;
+            }
+        }
+        Conversation row = Conversation.builder()
+                .userId(userId)
+                .characterId(dto.getCharacterId())
+                .title(title)
+                .sceneBackground(scene)
+                .lastMessage("")
+                .lastMsgAt(LocalDateTime.now())
+                .build();
+        conversationMapper.insert(row);
+        ConversationVO vo = conversationMapper.selectVoById(row.getId());
+        if (vo == null) {
+            throw new BaseException("创建会话失败");
+        }
+        return vo;
     }
 }

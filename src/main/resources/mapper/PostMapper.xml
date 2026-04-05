@@ -66,4 +66,53 @@
         FROM post
         WHERE id = #{id}
     </delete>
+
+    <update id="incrementCommentCount">
+        UPDATE post
+        SET comment_count = IFNULL(comment_count, 0) + 1,
+            update_time   = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <update id="decrementCommentCount">
+        UPDATE post
+        SET comment_count = GREATEST(IFNULL(comment_count, 0) - 1, 0),
+            update_time   = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <update id="adjustCommentCount">
+        UPDATE post
+        SET comment_count = GREATEST(IFNULL(comment_count, 0) + #{delta}, 0),
+            update_time   = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <update id="incrementLikeCount">
+        UPDATE post
+        SET like_count  = IFNULL(like_count, 0) + 1,
+            update_time = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <update id="decrementLikeCount">
+        UPDATE post
+        SET like_count  = GREATEST(IFNULL(like_count, 0) - 1, 0),
+            update_time = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <update id="incrementShareCount">
+        UPDATE post
+        SET share_count = IFNULL(share_count, 0) + 1,
+            update_time = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <update id="incrementViewCount">
+        UPDATE post
+        SET view_count  = IFNULL(view_count, 0) + 1,
+            update_time = NOW()
+        WHERE id = #{id}
+    </update>
 </mapper>

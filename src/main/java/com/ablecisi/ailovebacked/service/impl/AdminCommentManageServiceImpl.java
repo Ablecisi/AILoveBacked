@@ -6,6 +6,7 @@ import com.ablecisi.ailovebacked.pojo.entity.Comment;
 import com.ablecisi.ailovebacked.pojo.vo.admin.AdminCommentListVO;
 import com.ablecisi.ailovebacked.result.PageResult;
 import com.ablecisi.ailovebacked.service.AdminCommentManageService;
+import com.ablecisi.ailovebacked.service.CommentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -17,6 +18,7 @@ import java.util.List;
 public class AdminCommentManageServiceImpl implements AdminCommentManageService {
 
     private final CommentMapper commentMapper;
+    private final CommentService commentService;
 
     @Override
     public PageResult<AdminCommentListVO> page(int page, int size, String keyword, Long articleId, Long postId) {
@@ -37,7 +39,7 @@ public class AdminCommentManageServiceImpl implements AdminCommentManageService 
 
     @Override
     public void softDelete(long id) {
-        int n = commentMapper.softDelete(id);
+        int n = commentService.softDelete(id);
         if (n == 0) {
             throw new BaseException("评论不存在或已删除");
         }

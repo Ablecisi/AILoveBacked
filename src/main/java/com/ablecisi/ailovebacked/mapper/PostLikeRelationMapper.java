@@ -1,17 +1,15 @@
 package com.ablecisi.ailovebacked.mapper;
 
+import com.ablecisi.ailovebacked.pojo.entity.PostLikeRelation;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
-/**
- * AILoveBacked <br>
- * com.ablecisi.ailovebacked.mapper <br>
- *
- * @author Ablecisi
- * @version 0.0.1
- * 2025/6/16
- * 星期一
- * 02:18
- **/
 @Mapper
 public interface PostLikeRelationMapper {
+
+    int countByUserAndPost(@Param("userId") Long userId, @Param("postId") Long postId);
+
+    int insert(PostLikeRelation row);
+
+    int deleteByUserAndPost(@Param("userId") Long userId, @Param("postId") Long postId);
 }

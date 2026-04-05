@@ -1,6 +1,5 @@
 package com.ablecisi.ailovebacked.service;
 
-import com.ablecisi.ailovebacked.context.BaseContext;
 import com.ablecisi.ailovebacked.mapper.AiCharacterMapper;
 import com.ablecisi.ailovebacked.mapper.PromptTemplateMapper;
 import com.ablecisi.ailovebacked.mapper.UserMapper;
@@ -38,13 +37,22 @@ public class PromptService {
      * @param profileBrief 用户简介
      * @param lastDialogue 上一次对话
      * @param userText     用户输入
+     * @param userId       当前用户 ID（须由调用方传入；异步线程中不能使用 ThreadLocal）
      * @return 角色对话
      */
     public String renderWithCharacter(AiCharacterVO role,
                                       EmotionClient.EmotionDTO emo,
                                       String profileBrief,
                                       String lastDialogue,
-                                      String userText) {
+                                      String userText,
+                                      Long userId,
+                                      String sessionScene) {
+        if (role == null) {
+            throw new IllegalArgumentException("角色不存在");
+        }
+        if (emo == null) {
+            throw new IllegalArgumentException("情绪识别结果为空");
+        }
 
         String roleType = (role.getTypeName() == null || role.getTypeName().isBlank())
                 ? "companion" : role.getTypeName();
@@ -52,7 +60,8 @@ public class PromptService {
         String tpl = Optional.ofNullable(templateMapper.selectActiveByRole(roleType))
                 .map(PromptTemplate::getTemplate)
                 .orElse(DEFAULT_TEMPLATE);
-        User user = userMapper.getUserById(BaseContext.getCurrentId());
+        User user = userId == null ? null : userMapper.getUserById(userId);
+        String userDisplayName = nv(user == null ? null : user.getName());
 
         return tpl.replace("{style}", resolvePromptStyle(role))
                 .replace("{name}", nv(role.getName()))
@@ -66,7 +75,8 @@ public class PromptService {
                 .replace("{profile}", nv(profileBrief))
                 .replace("{dialogue}", nv(lastDialogue))
                 .replace("{user_text}", nv(userText))
-                .replace("{user_name}", nv(user.getName()))
+                .replace("{user_name}", userDisplayName)
+                .replace("{scene}", nv(sessionScene))
                 ;
     }
 
@@ -78,15 +88,18 @@ public class PromptService {
      * @param profileBrief 用户简介
      * @param lastDialogue 上一次对话
      * @param userText    用户输入
+     * @param userId      当前用户 ID
      * @return 角色对话
      */
     public String renderWithCharacter(Long characterId,
                                       EmotionClient.EmotionDTO emo,
                                       String profileBrief,
                                       String lastDialogue,
-                                      String userText) {
+                                      String userText,
+                                      Long userId,
+                                      String sessionScene) {
         AiCharacterVO role = aiCharacterMapper.selectById(characterId);
-        return renderWithCharacter(role, emo, profileBrief, lastDialogue, userText);
+        return renderWithCharacter(role, emo, profileBrief, lastDialogue, userText, userId, sessionScene);
     }
 
     /**
@@ -125,6 +138,8 @@ public class PromptService {
                 你的兴趣爱好：{interests}
                 你的背景故事：{backstory}
             AI设定部分结束。
+            
+            当前会话场景与背景（须始终遵守）：{scene}
             
             用户设定部分开始：
                 用户的姓名为：「{user_name}」

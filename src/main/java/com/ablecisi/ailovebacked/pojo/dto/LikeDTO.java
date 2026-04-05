@@ -23,6 +23,4 @@ import java.io.Serializable;
 public class LikeDTO implements Serializable {
     @NotNull
     private Long commentId;
-    @NotNull
-    private Long userId;
 }

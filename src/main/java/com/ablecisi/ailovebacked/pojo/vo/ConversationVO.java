@@ -23,6 +23,7 @@ public class ConversationVO {
     private String characterName;     // 连表 ai_character
     private String characterAvatar;   // 连表 ai_character.image_url
     private String title;
+    private String sceneBackground;
     private String lastMessage;
     private LocalDateTime lastMsgAt;
     private LocalDateTime updateTime;

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ablecisi.ailovebacked.mapper.PostLikeRelationMapper">
+
+    <select id="countByUserAndPost" resultType="int">
+        SELECT COUNT(1)
+        FROM post_like_relation
+        WHERE user_id = #{userId}
+          AND post_id = #{postId}
+    </select>
+
+    <insert id="insert" parameterType="com.ablecisi.ailovebacked.pojo.entity.PostLikeRelation" useGeneratedKeys="true"
+            keyProperty="id">
+        INSERT INTO post_like_relation (user_id, post_id, create_time, update_time)
+        VALUES (#{userId}, #{postId}, NOW(), NOW())
+    </insert>
+
+    <delete id="deleteByUserAndPost">
+        DELETE
+        FROM post_like_relation
+        WHERE user_id = #{userId}
+          AND post_id = #{postId}
+    </delete>
+</mapper>

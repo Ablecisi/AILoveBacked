@@ -32,6 +32,10 @@ public class Conversation implements Serializable {
     private Long userId; // 用户ID，表示当前会话的用户
     private Long characterId; // 角色ID， 用于唯一标识聊天会话中的角色
     private String title; // 会话标题
+    /**
+     * 用户为本会话设定的场景/背景，参与系统 Prompt
+     */
+    private String sceneBackground;
     private String lastMessage; // 最后消息内容
     private LocalDateTime lastMsgAt; // 最后消息时间，使用 LocalDateTime 表示
     private LocalDateTime createTime; // 创建时间，使用 LocalDateTime 表示

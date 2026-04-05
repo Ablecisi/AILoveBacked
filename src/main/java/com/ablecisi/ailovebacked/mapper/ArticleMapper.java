@@ -59,4 +59,19 @@ public interface ArticleMapper {
     int adjustLikeCount(@Param("id") Long id, @Param("delta") int delta);
 
     int incrementViewCount(@Param("id") Long id);
+
+    /**
+     * 新增一条评论时 article.comment_count +1
+     */
+    int incrementCommentCount(@Param("id") Long id);
+
+    /**
+     * 软删除一条评论时 article.comment_count -1（不低于 0）
+     */
+    int decrementCommentCount(@Param("id") Long id);
+
+    /**
+     * 按增量调整评论数（如批量软删子树 delta 为负数）
+     */
+    int adjustCommentCount(@Param("id") Long id, @Param("delta") int delta);
 }

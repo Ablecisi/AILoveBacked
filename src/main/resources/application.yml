@@ -50,4 +50,6 @@ llm: # 大语言模型配置
   provider: ${ailove.llm.provider} # 大语言模型提供商
   apiKey: ${ailove.llm.apiKey} # API 密钥
   endpoint: ${ailove.llm.endpoint} # API 端点
+  # 是否在正文为空时使用模型的 reasoning_content（思考链）；false 时仅展示正式回复，避免冗长推理
+  include-reasoning-content: ${ailove.llm.include-reasoning-content:false}
 

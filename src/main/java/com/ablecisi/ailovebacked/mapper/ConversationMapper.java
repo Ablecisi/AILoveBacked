@@ -30,6 +30,8 @@ public interface ConversationMapper {
 
     Conversation selectById(@Param("id") Long id);
 
+    ConversationVO selectVoById(@Param("id") Long id);
+
     List<ConversationVO> pageByUser(@Param("userId") Long userId,
                                     @Param("page") int page,
                                     @Param("size") int size,
