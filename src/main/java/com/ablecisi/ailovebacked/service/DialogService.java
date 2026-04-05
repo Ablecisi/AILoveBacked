@@ -4,17 +4,22 @@ import com.ablecisi.ailovebacked.exception.BaseException;
 import com.ablecisi.ailovebacked.exception.ForbiddenException;
 import com.ablecisi.ailovebacked.mapper.AiCharacterMapper;
 import com.ablecisi.ailovebacked.mapper.ConversationMapper;
+import com.ablecisi.ailovebacked.mapper.EmotionLogMapper;
 import com.ablecisi.ailovebacked.pojo.dto.ChatSendDTO;
 import com.ablecisi.ailovebacked.pojo.entity.Conversation;
+import com.ablecisi.ailovebacked.pojo.entity.EmotionLog;
 import com.ablecisi.ailovebacked.pojo.entity.Message;
 import com.ablecisi.ailovebacked.pojo.vo.AiCharacterVO;
 import com.ablecisi.ailovebacked.pojo.vo.ChatReplyVO;
+import com.ablecisi.ailovebacked.pojo.vo.ConversationVO;
 import com.ablecisi.ailovebacked.pojo.vo.MessageVO;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
@@ -31,11 +36,13 @@ import java.util.function.Consumer;
  * 星期三
  * 17:46
  **/
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class DialogService {
 
     private final EmotionClient emotionClient;
+    private final EmotionLogMapper emotionLogMapper;
     private final UserApiRateLimiter userApiRateLimiter;
     private final PromptService promptService;
     private final LlmClient llmClient;
@@ -75,6 +82,7 @@ public class DialogService {
         // 2. 情绪识别 & 回填
         var emo = emotionClient.detect(dto.getText());
         messageService.updateEmotion(um.getId(), emo);
+        recordEmotionLog(dto.getUserId(), um.getId(), emo);
 
         // 3. 更新画像 & 获取摘要
         String profileBrief = profileService.updateAndSummarize(dto.getUserId(), emo.getEmotion());
@@ -117,6 +125,7 @@ public class DialogService {
         Message um = messageService.saveUserMessage(dto.getConversationId(), dto.getUserId(), dto.getText());
         var emo = emotionClient.detect(dto.getText());
         messageService.updateEmotion(um.getId(), emo);
+        recordEmotionLog(dto.getUserId(), um.getId(), emo);
         String profileBrief = profileService.updateAndSummarize(dto.getUserId(), emo.getEmotion());
         String lastDialogue = messageService.briefContext(dto.getConversationId(), 8);
         String prompt = promptService.renderWithCharacter(dto.getCharacterId(), emo, profileBrief, lastDialogue, dto.getText());
@@ -144,5 +153,31 @@ public class DialogService {
         // 倒序改正序
         ml.sort(Comparator.comparing(MessageVO::getCreateTime));
         return ml;
+    }
+
+    /**
+     * 当前用户的会话列表（按最近消息时间倒序）
+     */
+    private void recordEmotionLog(Long userId, Long messageId, EmotionClient.EmotionDTO emo) {
+        try {
+            double c = emo.getConfidence() == null ? 0.0 : emo.getConfidence();
+            EmotionLog row = EmotionLog.builder()
+                    .userId(userId)
+                    .messageId(messageId)
+                    .emotion(emo.getEmotion())
+                    .confidence(BigDecimal.valueOf(c))
+                    .build();
+            emotionLogMapper.insert(row);
+        } catch (Exception e) {
+            log.warn("写入 emotion_log 失败: {}", e.getMessage());
+        }
+    }
+
+    public List<ConversationVO> listMyConversations(int page, int size, Long userId) {
+        if (userId == null) {
+            throw new ForbiddenException("未登录");
+        }
+        int offset = (page - 1) * size;
+        return conversationMapper.pageByUser(userId, page, size, offset);
     }
 }

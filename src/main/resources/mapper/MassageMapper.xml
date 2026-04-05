@@ -98,7 +98,9 @@
     <select id="pageForAdmin" resultType="com.ablecisi.ailovebacked.pojo.vo.admin.AdminMessageListVO">
         SELECT m.id,
         m.conversation_id AS conversationId,
+        c.title AS conversationTitle,
         m.user_id AS userId,
+        COALESCE(NULLIF(TRIM(u.name), ''), u.username, CAST(u.id AS CHAR)) AS userDisplayName,
         m.type,
         m.content AS content,
         m.emotion,
@@ -107,6 +109,8 @@
         m.create_time AS createTime,
         m.update_time AS updateTime
         FROM message m
+        LEFT JOIN conversation c ON m.conversation_id = c.id
+        LEFT JOIN user u ON m.user_id = u.id
         <where>
             <if test="conversationId != null">
                 AND m.conversation_id = #{conversationId}

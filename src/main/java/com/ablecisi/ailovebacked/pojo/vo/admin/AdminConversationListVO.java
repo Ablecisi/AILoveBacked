@@ -8,6 +8,7 @@ import java.time.LocalDateTime;
 public class AdminConversationListVO {
     private Long id;
     private Long userId;
+    private String userDisplayName;
     private Long characterId;
     private String characterName;
     private String title;

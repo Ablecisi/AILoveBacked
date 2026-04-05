@@ -5,7 +5,7 @@ import com.ablecisi.ailovebacked.pojo.vo.AiCharacterVO;
 import com.ablecisi.ailovebacked.result.PageResult;
 
 public interface AdminAiCharacterManageService {
-    PageResult<AiCharacterVO> page(int page, int size, String keyword, Long typeId, Integer status);
+    PageResult<AiCharacterVO> page(int page, int size, String keyword, Long typeId, Integer status, Integer online);
 
     AiCharacterVO get(Long id);
 

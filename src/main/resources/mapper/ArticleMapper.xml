@@ -125,4 +125,11 @@
         FROM article
         WHERE id = #{id}
     </delete>
+
+    <update id="adjustLikeCount">
+        UPDATE article
+        SET like_count  = GREATEST(0, IFNULL(like_count, 0) + #{delta}),
+            update_time = NOW()
+        WHERE id = #{id}
+    </update>
 </mapper>

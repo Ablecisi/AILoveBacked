@@ -20,4 +20,8 @@ public interface ArticleCollectAdminMapper {
     int updateRow(ArticleCollectRelation row);
 
     int deleteById(@Param("id") Long id);
+
+    ArticleCollectRelation selectByUserAndArticle(@Param("userId") Long userId, @Param("articleId") Long articleId);
+
+    int deleteByUserAndArticle(@Param("userId") Long userId, @Param("articleId") Long articleId);
 }

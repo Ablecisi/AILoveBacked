@@ -55,4 +55,6 @@ public interface ArticleMapper {
     int updateRow(Article article);
 
     int deleteById(@Param("id") Long id);
+
+    int adjustLikeCount(@Param("id") Long id, @Param("delta") int delta);
 }

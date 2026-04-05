@@ -22,7 +22,7 @@ public class AdminAiCharacterManageServiceImpl implements AdminAiCharacterManage
     private final AiCharacterMapper aiCharacterMapper;
 
     @Override
-    public PageResult<AiCharacterVO> page(int page, int size, String keyword, Long typeId, Integer status) {
+    public PageResult<AiCharacterVO> page(int page, int size, String keyword, Long typeId, Integer status, Integer online) {
         int p = Math.max(page, 1);
         int s = Math.min(Math.max(size, 1), 100);
         String kw = keyword == null ? null : keyword.trim();
@@ -34,10 +34,11 @@ public class AdminAiCharacterManageServiceImpl implements AdminAiCharacterManage
         q.setKeyword(kw);
         q.setTypeId(typeId);
         q.setStatus(status);
+        q.setOnline(online);
         q.setPage(p);
         q.setSize(s);
         q.setOffset((p - 1) * s);
-        q.setOrderBy("update_time");
+        q.setOrderBy("create_time");
         q.setOrder("DESC");
         long total = aiCharacterMapper.pageCount(q);
         if (total == 0) {

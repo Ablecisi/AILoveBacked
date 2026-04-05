@@ -1,9 +1,13 @@
 package com.ablecisi.ailovebacked.controller;
 
+import com.ablecisi.ailovebacked.context.BaseContext;
 import com.ablecisi.ailovebacked.exception.BaseException;
+import com.ablecisi.ailovebacked.pojo.dto.ArticleToggleDTO;
 import com.ablecisi.ailovebacked.pojo.vo.ArticleVO;
 import com.ablecisi.ailovebacked.result.Result;
+import com.ablecisi.ailovebacked.service.ArticleInteractionService;
 import com.ablecisi.ailovebacked.service.ArticleService;
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -26,10 +30,13 @@ import java.util.List;
 @Slf4j
 public class ArticleController {
     private final ArticleService articleService;
+    private final ArticleInteractionService articleInteractionService;
 
     @Autowired
-    public ArticleController(ArticleService articleService) {
+    public ArticleController(ArticleService articleService,
+                             ArticleInteractionService articleInteractionService) {
         this.articleService = articleService;
+        this.articleInteractionService = articleInteractionService;
     }
 
     /**
@@ -83,6 +90,38 @@ public class ArticleController {
         log.info("请求特色文章，标签: {}", tags);
         ArticleVO articleVO = articleService.getFeaturedArticle(tags);
         return Result.success(articleVO);
+    }
+
+    /**
+     * 切换点赞状态
+     *
+     * @param body 请求体
+     * @return 无
+     */
+    @PostMapping("/like")
+    public Result<Void> toggleLike(@RequestBody @Valid ArticleToggleDTO body) {
+        Long uid = BaseContext.getCurrentId();
+        if (uid == null) {
+            return Result.error("未登录或登录已失效");
+        }
+        articleInteractionService.setArticleLiked(uid, body.getArticleId(), Boolean.TRUE.equals(body.getActive()));
+        return Result.success();
+    }
+
+    /**
+     * 切换收藏状态
+     *
+     * @param body 请求体
+     * @return 无
+     */
+    @PostMapping("/collect")
+    public Result<Void> toggleCollect(@RequestBody @Valid ArticleToggleDTO body) {
+        Long uid = BaseContext.getCurrentId();
+        if (uid == null) {
+            return Result.error("未登录或登录已失效");
+        }
+        articleInteractionService.setArticleCollected(uid, body.getArticleId(), Boolean.TRUE.equals(body.getActive()));
+        return Result.success();
     }
 
     /**

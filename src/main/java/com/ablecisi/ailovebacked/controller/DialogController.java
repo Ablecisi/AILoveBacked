@@ -3,6 +3,7 @@ package com.ablecisi.ailovebacked.controller;
 import com.ablecisi.ailovebacked.context.BaseContext;
 import com.ablecisi.ailovebacked.pojo.dto.ChatSendDTO;
 import com.ablecisi.ailovebacked.pojo.vo.ChatReplyVO;
+import com.ablecisi.ailovebacked.pojo.vo.ConversationVO;
 import com.ablecisi.ailovebacked.pojo.vo.MessageVO;
 import com.ablecisi.ailovebacked.result.Result;
 import com.ablecisi.ailovebacked.service.DialogService;
@@ -42,6 +43,12 @@ public class DialogController {
         this.dialogSseExecutor = dialogSseExecutor;
     }
 
+    /**
+     * 发送对话消息
+     *
+     * @param dto 发送对话消息
+     * @return 响应
+     */
     @PostMapping("/send")
     public Result<ChatReplyVO> send(@RequestBody @Valid ChatSendDTO dto) {
         log.info("用户 {} 发送消息到会话 {}: {}", BaseContext.getCurrentId(), dto.getConversationId(), dto.getText());
@@ -82,12 +89,32 @@ public class DialogController {
         return emitter;
     }
 
+    /**
+     * 拉取对话消息列表
+     * @param conversationId 会话 ID
+     * @param page 页码
+     * @param size 页大小
+     * @return 响应
+     */
     @GetMapping("/list")
     public Result<List<MessageVO>> list(@RequestParam Long conversationId,
                                         @RequestParam(defaultValue = "1") int page,
                                         @RequestParam(defaultValue = "10") int size) {
         log.info("分页拉取会话 {} 消息列表: page={}, size={}", conversationId, page, size);
         return Result.success(dialogService.listMessages(conversationId, page, size, BaseContext.getCurrentId()));
+    }
+
+    /**
+     * 拉取我的会话列表
+     *
+     * @param page 页码
+     * @param size 页大小
+     * @return 响应
+     */
+    @GetMapping("/conversations")
+    public Result<List<ConversationVO>> myConversations(@RequestParam(defaultValue = "1") int page,
+                                                        @RequestParam(defaultValue = "50") int size) {
+        return Result.success(dialogService.listMyConversations(page, size, BaseContext.getCurrentId()));
     }
 }
 

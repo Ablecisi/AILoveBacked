@@ -22,11 +22,12 @@ import java.io.Serializable;
 public class AiCharacterQueryDTO implements Serializable {
     private Long userId;      // 查用户自建
     private Long typeId;
-    private Integer status;   // 1/0
+    private Integer status;   // 1/0 启用/停用
+    private Integer online;   // 1/0 在线/离线
     private String keyword;   // 按 name/desc/persona/backstory 模糊
     private Integer page = 1;
     private Integer size = 10;
     private Integer offset;  // 计算得出，前端无需传
-    private String orderBy = "update_time"; // 可选：create_time / name 等
+    private String orderBy = "create_time"; // 可选：create_time / update_time / name 等
     private String order = "DESC";          // ASC/DESC
 }

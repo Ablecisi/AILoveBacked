@@ -16,16 +16,17 @@
             <if test="avatarUrl != null">avatar_url = #{avatarUrl},</if>
             <if test="followingCount != null">following_count = #{followingCount},</if>
             <if test="followersCount != null">followers_count = #{followersCount},</if>
+            <if test="status != null">status = #{status},</if>
             update_time = NOW(),
         </set>
         WHERE id = #{id}
     </update>
 
     <insert id="insertUser" parameterType="User" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO user (username, password, name, description, avatar_url, following_count, followers_count,
+        INSERT INTO user (username, password, name, description, avatar_url, following_count, followers_count, status,
                           create_time, update_time)
         VALUES (#{username}, #{password}, #{name}, #{description}, #{avatarUrl},
-                #{followingCount}, #{followersCount}, NOW(), NOW())
+                #{followingCount}, #{followersCount}, COALESCE(#{status}, 1), NOW(), NOW())
     </insert>
 
     <delete id="deleteUserById">
@@ -67,6 +68,7 @@
         avatar_url AS avatarUrl,
         following_count AS followingCount,
         followers_count AS followersCount,
+        status,
         create_time AS createTime,
         update_time AS updateTime
         FROM user

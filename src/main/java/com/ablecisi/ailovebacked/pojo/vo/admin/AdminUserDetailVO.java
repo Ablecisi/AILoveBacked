@@ -13,6 +13,7 @@ public class AdminUserDetailVO {
     private String avatarUrl;
     private Integer followingCount;
     private Integer followersCount;
+    private Integer status;
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
 }

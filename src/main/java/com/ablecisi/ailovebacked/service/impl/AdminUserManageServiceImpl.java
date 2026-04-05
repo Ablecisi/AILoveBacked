@@ -54,6 +54,7 @@ public class AdminUserManageServiceImpl implements AdminUserManageService {
         v.setAvatarUrl(u.getAvatarUrl());
         v.setFollowingCount(u.getFollowingCount());
         v.setFollowersCount(u.getFollowersCount());
+        v.setStatus(u.getStatus() != null ? u.getStatus() : 1);
         v.setCreateTime(u.getCreateTime());
         v.setUpdateTime(u.getUpdateTime());
         return v;
@@ -80,6 +81,7 @@ public class AdminUserManageServiceImpl implements AdminUserManageService {
                 .avatarUrl(dto.getAvatarUrl())
                 .followingCount(dto.getFollowingCount() != null ? dto.getFollowingCount() : 0)
                 .followersCount(dto.getFollowersCount() != null ? dto.getFollowersCount() : 0)
+                .status(dto.getStatus() != null ? dto.getStatus() : 1)
                 .build();
         userMapper.insertUser(u);
         if (u.getId() == null) {
@@ -120,6 +122,9 @@ public class AdminUserManageServiceImpl implements AdminUserManageService {
         }
         if (dto.getFollowersCount() != null) {
             u.setFollowersCount(dto.getFollowersCount());
+        }
+        if (dto.getStatus() != null) {
+            u.setStatus(dto.getStatus());
         }
         userMapper.updateUser(u);
     }

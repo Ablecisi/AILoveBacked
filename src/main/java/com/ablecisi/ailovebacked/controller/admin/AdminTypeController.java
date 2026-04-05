@@ -28,13 +28,13 @@ public class AdminTypeController {
     }
 
     @PostMapping
-    public Result<Map<String, Long>> create(@RequestBody NameBody body) {
-        return Result.success(Map.of("id", adminTypeManageService.create(body.getName())));
+    public Result<Map<String, Long>> create(@RequestBody TypeWriteBody body) {
+        return Result.success(Map.of("id", adminTypeManageService.create(body.getName(), body.getPromptStyle())));
     }
 
     @PutMapping("/{id}")
-    public Result<Void> update(@PathVariable long id, @RequestBody NameBody body) {
-        adminTypeManageService.update(id, body.getName());
+    public Result<Void> update(@PathVariable long id, @RequestBody TypeWriteBody body) {
+        adminTypeManageService.update(id, body.getName(), body.getPromptStyle());
         return Result.success();
     }
 
@@ -45,7 +45,11 @@ public class AdminTypeController {
     }
 
     @Data
-    public static class NameBody {
+    public static class TypeWriteBody {
         private String name;
+        /**
+         * 对话语气/风格，可选
+         */
+        private String promptStyle;
     }
 }

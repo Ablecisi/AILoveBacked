@@ -9,9 +9,9 @@ public interface AdminTypeManageService {
 
     TypeItem get(Long id);
 
-    long create(String name);
+    long create(String name, String promptStyle);
 
-    void update(Long id, String name);
+    void update(Long id, String name, String promptStyle);
 
     void delete(Long id);
 }

@@ -1,8 +1,13 @@
 package com.ablecisi.ailovebacked.service.impl;
 
+import com.ablecisi.ailovebacked.context.BaseContext;
 import com.ablecisi.ailovebacked.exception.BaseException;
+import com.ablecisi.ailovebacked.mapper.ArticleCollectAdminMapper;
+import com.ablecisi.ailovebacked.mapper.ArticleLikeAdminMapper;
 import com.ablecisi.ailovebacked.mapper.ArticleMapper;
+import com.ablecisi.ailovebacked.mapper.UserMapper;
 import com.ablecisi.ailovebacked.pojo.entity.Article;
+import com.ablecisi.ailovebacked.pojo.entity.User;
 import com.ablecisi.ailovebacked.pojo.vo.ArticleVO;
 import com.ablecisi.ailovebacked.service.ArticleService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,10 +29,19 @@ import java.util.List;
 public class ArticleServiceImpl implements ArticleService {
 
     private final ArticleMapper articleMapper;
+    private final UserMapper userMapper;
+    private final ArticleLikeAdminMapper articleLikeAdminMapper;
+    private final ArticleCollectAdminMapper articleCollectAdminMapper;
 
     @Autowired
-    public ArticleServiceImpl(ArticleMapper articleMapper) {
+    public ArticleServiceImpl(ArticleMapper articleMapper,
+                              UserMapper userMapper,
+                              ArticleLikeAdminMapper articleLikeAdminMapper,
+                              ArticleCollectAdminMapper articleCollectAdminMapper) {
         this.articleMapper = articleMapper;
+        this.userMapper = userMapper;
+        this.articleLikeAdminMapper = articleLikeAdminMapper;
+        this.articleCollectAdminMapper = articleCollectAdminMapper;
     }
 
     /**
@@ -121,6 +135,16 @@ public class ArticleServiceImpl implements ArticleService {
         if (article.getTags() == null) {
             article.setTags(List.of());
         }
+        User author = article.getUserId() != null ? userMapper.getUserById(article.getUserId()) : null;
+        String authorName = author != null && author.getName() != null && !author.getName().isBlank()
+                ? author.getName()
+                : (author != null ? author.getUsername() : "作者");
+        String authorAvatar = author != null && author.getAvatarUrl() != null ? author.getAvatarUrl() : "";
+
+        Long uid = BaseContext.getCurrentId();
+        boolean liked = uid != null && articleLikeAdminMapper.selectByUserAndArticle(uid, article.getId()) != null;
+        boolean bookmarked = uid != null && articleCollectAdminMapper.selectByUserAndArticle(uid, article.getId()) != null;
+
         return ArticleVO.builder()
                 .id(String.valueOf(article.getId()))
                 .title(article.getTitle())
@@ -128,16 +152,16 @@ public class ArticleServiceImpl implements ArticleService {
                 .content(article.getContent())
                 .coverImageUrl(article.getCoverImageUrl())
                 .authorId(String.valueOf(article.getUserId()))
-                .authorName("作者名称") // 需要从用户服务获取
-                .authorAvatarUrl("https://images.pexels.com/photos/1036623/pexels-photo-1036623.jpeg") // 需要从用户服务获取
+                .authorName(authorName)
+                .authorAvatarUrl(authorAvatar)
                 .publishTime(article.getUpdateTime())
                 .viewCount(article.getViewCount())
                 .likeCount(article.getLikeCount())
-                .commentCount(article.getCommentCount()) // 需要从数据库或其他服务获取评论数
-                .isLiked(false) // 需要根据用户信息设置
-                .isBookmarked(false) // 需要根据用户信息设置
-                .tags(article.getTags()) // 需要从数据库或其他服务获取标签
-                .comments(List.of()) // 需要从数据库或其他服务获取评论
+                .commentCount(article.getCommentCount())
+                .isLiked(liked)
+                .isBookmarked(bookmarked)
+                .tags(article.getTags())
+                .comments(List.of())
                 .build();
     }
 }

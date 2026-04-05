@@ -41,15 +41,13 @@ public class WebMvcConfiguration extends WebMvcConfigurationSupport {
                 .addPathPatterns("/api/**")
                 .excludePathPatterns(
                         "/api/user/login",
-                        "/api/user/login/",
                         "/api/app/bootstrap",
-                        "/api/app/bootstrap/");
+                        "/api/post/feed");
         log.info("注册管理端 JWT 拦截器: /admin/api/**");
         registry.addInterceptor(jwtTokenAdminInterceptor)
                 .addPathPatterns("/admin/api/**")
                 .excludePathPatterns(
-                        "/admin/api/v1/auth/login",
-                        "/admin/api/v1/auth/login/");
+                        "/admin/api/v1/auth/login");
     }
 
     /**

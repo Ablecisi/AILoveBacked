@@ -35,6 +35,10 @@ public class User implements Serializable {
     private String avatarUrl; // 头像URL
     private Integer followingCount; // 关注人数
     private Integer followersCount; // 粉丝人数
+    /**
+     * 1 启用 0 停用（停用后不可登录）
+     */
+    private Integer status;
     private LocalDateTime createTime; // 创建时间
     private LocalDateTime updateTime; // 更新时间
 }

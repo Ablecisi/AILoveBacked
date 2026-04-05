@@ -5,6 +5,7 @@ import com.ablecisi.ailovebacked.constant.StatusCodeConstant;
 import com.ablecisi.ailovebacked.context.BaseContext;
 import com.ablecisi.ailovebacked.pojo.dto.UserDTO;
 import com.ablecisi.ailovebacked.pojo.dto.UserFollowDTO;
+import com.ablecisi.ailovebacked.pojo.dto.UserProfileUpdateDTO;
 import com.ablecisi.ailovebacked.pojo.vo.UserVO;
 import com.ablecisi.ailovebacked.result.Result;
 import com.ablecisi.ailovebacked.service.UserActivityService;
@@ -128,6 +129,18 @@ public class UserController {
         log.info("获取用户个人信息");
         UserVO userVO = userService.getUserProfile();
         return Result.success("获取成功", userVO);
+    }
+
+    /**
+     * 更新用户资料
+     *
+     * @param body 用户资料
+     * @return 更新结果
+     */
+    @PutMapping("/profile")
+    public Result<UserVO> updateProfile(@RequestBody UserProfileUpdateDTO body) {
+        log.info("更新用户资料");
+        return Result.success("更新成功", userService.updateProfile(body));
     }
 
     /**

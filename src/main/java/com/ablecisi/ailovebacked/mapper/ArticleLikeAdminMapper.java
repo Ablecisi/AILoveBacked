@@ -20,4 +20,8 @@ public interface ArticleLikeAdminMapper {
     int updateRow(ArticleLikeRelation row);
 
     int deleteById(@Param("id") Long id);
+
+    ArticleLikeRelation selectByUserAndArticle(@Param("userId") Long userId, @Param("articleId") Long articleId);
+
+    int deleteByUserAndArticle(@Param("userId") Long userId, @Param("articleId") Long articleId);
 }

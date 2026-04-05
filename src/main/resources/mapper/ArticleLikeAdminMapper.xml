@@ -49,4 +49,19 @@
         FROM article_like_relation
         WHERE id = #{id}
     </delete>
+
+    <select id="selectByUserAndArticle" resultMap="Map">
+        SELECT *
+        FROM article_like_relation
+        WHERE user_id = #{userId}
+          AND article_id = #{articleId}
+        LIMIT 1
+    </select>
+
+    <delete id="deleteByUserAndArticle">
+        DELETE
+        FROM article_like_relation
+        WHERE user_id = #{userId}
+          AND article_id = #{articleId}
+    </delete>
 </mapper>

@@ -3,6 +3,7 @@ package com.ablecisi.ailovebacked.service;
 import com.ablecisi.ailovebacked.constant.FollowMessageConstant;
 import com.ablecisi.ailovebacked.pojo.dto.UserDTO;
 import com.ablecisi.ailovebacked.pojo.dto.UserFollowDTO;
+import com.ablecisi.ailovebacked.pojo.dto.UserProfileUpdateDTO;
 import com.ablecisi.ailovebacked.pojo.vo.UserVO;
 
 import java.util.List;
@@ -53,4 +54,9 @@ public interface UserService {
      * @return 用户视图对象
      */
     UserVO getUserProfile();
+
+    /**
+     * 更新当前登录用户资料（仅非空字段覆盖）
+     */
+    UserVO updateProfile(UserProfileUpdateDTO dto);
 }

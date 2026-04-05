@@ -13,6 +13,10 @@ public class AdminUserListVO {
     private String avatarUrl;
     private Integer followingCount;
     private Integer followersCount;
+    /**
+     * 1 启用 0 停用
+     */
+    private Integer status;
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
 }

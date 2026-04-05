@@ -7,6 +7,7 @@ import com.ablecisi.ailovebacked.exception.BaseException;
 import com.ablecisi.ailovebacked.mapper.UserMapper;
 import com.ablecisi.ailovebacked.pojo.dto.UserDTO;
 import com.ablecisi.ailovebacked.pojo.dto.UserFollowDTO;
+import com.ablecisi.ailovebacked.pojo.dto.UserProfileUpdateDTO;
 import com.ablecisi.ailovebacked.pojo.entity.User;
 import com.ablecisi.ailovebacked.pojo.vo.UserVO;
 import com.ablecisi.ailovebacked.properties.JwtProperties;
@@ -57,6 +58,9 @@ public class UserServiceImpl implements UserService {
         }
         if (!passwordMatches(user, userDTO.getPassword())) {
             throw new BaseException("密码错误");
+        }
+        if (user.getStatus() != null && user.getStatus() == 0) {
+            throw new BaseException("账号已停用");
         }
         BaseContext.setCurrentId(user.getId());
         Map<String, Object> claims = new HashMap<>();
@@ -186,5 +190,29 @@ public class UserServiceImpl implements UserService {
                 .characterIds(List.of()) // 这里可以调用角色服务获取用户的角色ID列表
                 .isFollowed(false) // 自己的资料页，不需要关注状态
                 .build();
+    }
+
+    @Override
+    @Transactional
+    public UserVO updateProfile(UserProfileUpdateDTO dto) {
+        Long userId = BaseContext.getCurrentId();
+        if (userId == null || userId <= 0) {
+            throw new BaseException("用户未登录");
+        }
+        User user = userMapper.getUserById(userId);
+        if (user == null) {
+            throw new BaseException("用户不存在");
+        }
+        if (dto.getName() != null && !dto.getName().isBlank()) {
+            user.setName(dto.getName().trim());
+        }
+        if (dto.getDescription() != null) {
+            user.setDescription(dto.getDescription());
+        }
+        if (dto.getAvatarUrl() != null && !dto.getAvatarUrl().isBlank()) {
+            user.setAvatarUrl(dto.getAvatarUrl().trim());
+        }
+        userMapper.updateUser(user);
+        return getUserProfile();
     }
 }

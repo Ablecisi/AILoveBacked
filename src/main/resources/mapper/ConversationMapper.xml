@@ -100,6 +100,7 @@
     <select id="pageForAdmin" resultType="com.ablecisi.ailovebacked.pojo.vo.admin.AdminConversationListVO">
         SELECT c.id,
         c.user_id AS userId,
+        COALESCE(NULLIF(TRIM(u.name), ''), u.username, CAST(u.id AS CHAR)) AS userDisplayName,
         c.character_id AS characterId,
         a.name AS characterName,
         c.title,
@@ -108,6 +109,7 @@
         c.create_time AS createTime,
         c.update_time AS updateTime
         FROM conversation c
+        LEFT JOIN user u ON c.user_id = u.id
         LEFT JOIN ai_character a ON c.character_id = a.id
         <where>
             <if test="userId != null">

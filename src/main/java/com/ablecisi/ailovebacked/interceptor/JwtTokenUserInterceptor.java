@@ -36,6 +36,15 @@ public class JwtTokenUserInterceptor implements HandlerInterceptor {
         this.objectMapper = objectMapper;
     }
 
+    /**
+     * User 端 jwt 令牌校验
+     *
+     * @param request  请求
+     * @param response 响应
+     * @param handler  方法
+     * @return 拦截结果
+     */
+    @Override
     public boolean preHandle(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull Object handler) {
         if (isAnonymousUserPath(request)) {
             return true;
@@ -86,7 +95,8 @@ public class JwtTokenUserInterceptor implements HandlerInterceptor {
         }
         String path = normalizedPathWithinContext(request);
         return "/api/user/login".equals(path)
-                || "/api/app/bootstrap".equals(path);
+                || "/api/app/bootstrap".equals(path)
+                || "/api/post/feed".equals(path);
     }
 
     /**

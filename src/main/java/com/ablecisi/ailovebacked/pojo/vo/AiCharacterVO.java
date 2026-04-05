@@ -27,6 +27,10 @@ public class AiCharacterVO {
     private String name;
     private Long typeId;
     private String typeName;
+    /**
+     * 来自 type.prompt_style，供 Prompt {style}；空则服务端默认
+     */
+    private String typePromptStyle;
     private Integer gender;
     private Integer age;
     private String imageUrl;

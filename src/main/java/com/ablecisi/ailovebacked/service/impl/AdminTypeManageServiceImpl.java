@@ -32,11 +32,14 @@ public class AdminTypeManageServiceImpl implements AdminTypeManageService {
 
     @Override
     @Transactional
-    public long create(String name) {
+    public long create(String name, String promptStyle) {
         if (name == null || name.isBlank()) {
             throw new BaseException("名称不能为空");
         }
-        TypeItem row = TypeItem.builder().name(name.trim()).build();
+        TypeItem row = TypeItem.builder()
+                .name(name.trim())
+                .promptStyle(blankToNull(promptStyle))
+                .build();
         appTypeMapper.insert(row);
         if (row.getId() == null) {
             throw new BaseException("创建失败");
@@ -46,7 +49,7 @@ public class AdminTypeManageServiceImpl implements AdminTypeManageService {
 
     @Override
     @Transactional
-    public void update(Long id, String name) {
+    public void update(Long id, String name, String promptStyle) {
         TypeItem t = appTypeMapper.selectById(id);
         if (t == null) {
             throw new BaseException("类型不存在");
@@ -55,7 +58,16 @@ public class AdminTypeManageServiceImpl implements AdminTypeManageService {
             throw new BaseException("名称不能为空");
         }
         t.setName(name.trim());
+        t.setPromptStyle(blankToNull(promptStyle));
         appTypeMapper.updateRow(t);
+    }
+
+    private static String blankToNull(String s) {
+        if (s == null) {
+            return null;
+        }
+        String t = s.trim();
+        return t.isEmpty() ? null : t;
     }
 
     @Override

@@ -6,32 +6,34 @@
     <resultMap id="TypeMap" type="com.ablecisi.ailovebacked.pojo.entity.TypeItem">
         <id column="id" property="id"/>
         <result column="name" property="name"/>
+        <result column="prompt_style" property="promptStyle"/>
         <result column="create_time" property="createTime"/>
         <result column="update_time" property="updateTime"/>
     </resultMap>
 
     <select id="selectAll" resultMap="TypeMap">
-        SELECT id, name, create_time, update_time
+        SELECT id, name, prompt_style, create_time, update_time
         FROM type
         ORDER BY id ASC
     </select>
 
     <select id="selectById" resultMap="TypeMap">
-        SELECT id, name, create_time, update_time
+        SELECT id, name, prompt_style, create_time, update_time
         FROM type
         WHERE id = #{id}
     </select>
 
     <insert id="insert" parameterType="com.ablecisi.ailovebacked.pojo.entity.TypeItem" useGeneratedKeys="true"
             keyProperty="id">
-        INSERT INTO type (name, create_time, update_time)
-        VALUES (#{name}, NOW(), NOW())
+        INSERT INTO type (name, prompt_style, create_time, update_time)
+        VALUES (#{name}, #{promptStyle}, NOW(), NOW())
     </insert>
 
     <update id="updateRow" parameterType="com.ablecisi.ailovebacked.pojo.entity.TypeItem">
         UPDATE type
-        SET name        = #{name},
-            update_time = NOW()
+        SET name         = #{name},
+            prompt_style = #{promptStyle},
+            update_time  = NOW()
         WHERE id = #{id}
     </update>
 

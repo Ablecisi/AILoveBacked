@@ -345,10 +345,11 @@ CREATE TABLE `prompt_template`
 DROP TABLE IF EXISTS `type`;
 CREATE TABLE `type`
 (
-    `id`          bigint                                                       NOT NULL AUTO_INCREMENT COMMENT '类型ID',
-    `name`        varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '类型称谓',
-    `create_time` datetime                                                     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    `update_time` datetime                                                     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    `id`           bigint                                                       NOT NULL AUTO_INCREMENT COMMENT '类型ID',
+    `name`         varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '类型称谓',
+    `prompt_style` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci        NULL COMMENT '对话语气/风格描述（填入系统提示 {style}；空则用全局默认）',
+    `create_time`  datetime                                                     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time`  datetime                                                     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     PRIMARY KEY (`id`) USING BTREE
 ) ENGINE = InnoDB
   CHARACTER SET = utf8mb4
@@ -369,6 +370,7 @@ CREATE TABLE `user`
     `avatar_url`      varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL     DEFAULT NULL COMMENT '头像URL',
     `following_count` int                                                           NULL     DEFAULT 0 COMMENT '关注数量',
     `followers_count` int                                                           NULL     DEFAULT 0 COMMENT '粉丝数量',
+    `status` tinyint NOT NULL DEFAULT 1 COMMENT '1启用 0停用',
     `create_time`     datetime                                                      NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     `update_time`     datetime                                                      NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     PRIMARY KEY (`id`) USING BTREE,

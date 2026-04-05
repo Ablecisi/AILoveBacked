@@ -23,8 +23,9 @@ public class AdminAiCharacterController {
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) Long typeId,
-            @RequestParam(required = false) Integer status) {
-        return Result.success(adminAiCharacterManageService.page(page, size, keyword, typeId, status));
+            @RequestParam(required = false) Integer status,
+            @RequestParam(required = false) Integer online) {
+        return Result.success(adminAiCharacterManageService.page(page, size, keyword, typeId, status, online));
     }
 
     @GetMapping("/{id}")

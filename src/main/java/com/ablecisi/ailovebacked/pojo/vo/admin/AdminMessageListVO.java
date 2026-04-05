@@ -8,7 +8,15 @@ import java.time.LocalDateTime;
 public class AdminMessageListVO {
     private Long id;
     private Long conversationId;
+    /**
+     * 会话标题（列表展示）
+     */
+    private String conversationTitle;
     private Long userId;
+    /**
+     * 用户昵称或登录名
+     */
+    private String userDisplayName;
     private Integer type;
     private String content;
     private String emotion;
