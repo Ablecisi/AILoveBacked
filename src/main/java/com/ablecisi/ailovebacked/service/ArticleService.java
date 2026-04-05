@@ -50,4 +50,9 @@ public interface ArticleService {
      * 记录一次阅读（浏览量 +1）
      */
     void recordArticleView(Long articleId);
+
+    /**
+     * 当前用户收藏的文章，按收藏时间倒序
+     */
+    List<ArticleVO> listCollectedArticles(Long userId, int page, int size);
 }

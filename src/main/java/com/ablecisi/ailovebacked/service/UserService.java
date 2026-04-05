@@ -3,6 +3,7 @@ package com.ablecisi.ailovebacked.service;
 import com.ablecisi.ailovebacked.constant.FollowMessageConstant;
 import com.ablecisi.ailovebacked.pojo.dto.UserDTO;
 import com.ablecisi.ailovebacked.pojo.dto.UserFollowDTO;
+import com.ablecisi.ailovebacked.pojo.dto.UserPasswordChangeDTO;
 import com.ablecisi.ailovebacked.pojo.dto.UserProfileUpdateDTO;
 import com.ablecisi.ailovebacked.pojo.vo.UserVO;
 
@@ -59,4 +60,6 @@ public interface UserService {
      * 更新当前登录用户资料（仅非空字段覆盖）
      */
     UserVO updateProfile(UserProfileUpdateDTO dto);
+
+    void changePassword(UserPasswordChangeDTO dto);
 }

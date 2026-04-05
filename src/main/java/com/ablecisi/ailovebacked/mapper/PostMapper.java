@@ -13,6 +13,10 @@ public interface PostMapper {
 
     List<Post> selectPage(@Param("offset") int offset, @Param("size") int size);
 
+    long countByUserId(@Param("userId") Long userId);
+
+    List<Post> selectPageByUserId(@Param("userId") Long userId, @Param("offset") int offset, @Param("size") int size);
+
     long countAll();
 
     int insert(Post row);

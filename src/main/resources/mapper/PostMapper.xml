@@ -37,6 +37,20 @@
         LIMIT #{size} OFFSET #{offset}
     </select>
 
+    <select id="countByUserId" resultType="long">
+        SELECT COUNT(*)
+        FROM post
+        WHERE user_id = #{userId}
+    </select>
+
+    <select id="selectPageByUserId" resultMap="PostMap">
+        SELECT *
+        FROM post
+        WHERE user_id = #{userId}
+        ORDER BY create_time DESC, id DESC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
     <insert id="insert" parameterType="com.ablecisi.ailovebacked.pojo.entity.Post" useGeneratedKeys="true"
             keyProperty="id">
         INSERT INTO post (user_id, content, image_urls, tags, view_count, like_count, share_count, comment_count,

@@ -4,9 +4,11 @@ import com.ablecisi.ailovebacked.constant.FollowMessageConstant;
 import com.ablecisi.ailovebacked.constant.JwtClaimsConstant;
 import com.ablecisi.ailovebacked.context.BaseContext;
 import com.ablecisi.ailovebacked.exception.BaseException;
+import com.ablecisi.ailovebacked.mapper.PostMapper;
 import com.ablecisi.ailovebacked.mapper.UserMapper;
 import com.ablecisi.ailovebacked.pojo.dto.UserDTO;
 import com.ablecisi.ailovebacked.pojo.dto.UserFollowDTO;
+import com.ablecisi.ailovebacked.pojo.dto.UserPasswordChangeDTO;
 import com.ablecisi.ailovebacked.pojo.dto.UserProfileUpdateDTO;
 import com.ablecisi.ailovebacked.pojo.entity.User;
 import com.ablecisi.ailovebacked.pojo.vo.UserVO;
@@ -37,11 +39,13 @@ import java.util.Map;
 @Service
 public class UserServiceImpl implements UserService {
     private final UserMapper userMapper;
+    private final PostMapper postMapper;
     private final JwtProperties jwtProperties;
     private final PasswordEncoder passwordEncoder;
 
-    public UserServiceImpl(UserMapper userMapper, JwtProperties jwtProperties, PasswordEncoder passwordEncoder) {
+    public UserServiceImpl(UserMapper userMapper, PostMapper postMapper, JwtProperties jwtProperties, PasswordEncoder passwordEncoder) {
         this.userMapper = userMapper;
+        this.postMapper = postMapper;
         this.jwtProperties = jwtProperties;
         this.passwordEncoder = passwordEncoder;
     }
@@ -72,6 +76,7 @@ public class UserServiceImpl implements UserService {
         log.info("用户 {} 登录成功，生成的token: {}", user.getUsername(), token);
 
         // 创建用户视图对象
+        long pc = postMapper.countByUserId(user.getId());
         return UserVO.builder()
                 .id(String.valueOf(user.getId()))
                 .username(user.getUsername())
@@ -80,6 +85,7 @@ public class UserServiceImpl implements UserService {
                 .avatarUrl(user.getAvatarUrl())
                 .followersCount(user.getFollowersCount())
                 .followingCount(user.getFollowingCount())
+                .postCount((int) Math.min(pc, Integer.MAX_VALUE))
                 .token(token) // 使用JWT生成
                 .postIds(List.of())
                 .isFollowed(false) // 登录时不需要关注状态
@@ -178,6 +184,7 @@ public class UserServiceImpl implements UserService {
         if (user == null) {
             throw new BaseException("用户不存在");
         }
+        long pc = postMapper.countByUserId(user.getId());
         return UserVO.builder()
                 .id(String.valueOf(user.getId()))
                 .username(user.getUsername())
@@ -186,6 +193,7 @@ public class UserServiceImpl implements UserService {
                 .avatarUrl(user.getAvatarUrl())
                 .followersCount(user.getFollowersCount())
                 .followingCount(user.getFollowingCount())
+                .postCount((int) Math.min(pc, Integer.MAX_VALUE))
                 .postIds(List.of()) // 这里可以调用帖子服务获取用户的帖子ID列表
                 .characterIds(List.of()) // 这里可以调用角色服务获取用户的角色ID列表
                 .isFollowed(false) // 自己的资料页，不需要关注状态
@@ -203,6 +211,14 @@ public class UserServiceImpl implements UserService {
         if (user == null) {
             throw new BaseException("用户不存在");
         }
+        if (dto.getUsername() != null && !dto.getUsername().isBlank()) {
+            String nu = dto.getUsername().trim();
+            User sameName = userMapper.getUserByUsername(nu);
+            if (sameName != null && !sameName.getId().equals(userId)) {
+                throw new BaseException("用户名已被占用");
+            }
+            user.setUsername(nu);
+        }
         if (dto.getName() != null && !dto.getName().isBlank()) {
             user.setName(dto.getName().trim());
         }
@@ -214,5 +230,38 @@ public class UserServiceImpl implements UserService {
         }
         userMapper.updateUser(user);
         return getUserProfile();
+    }
+
+    @Override
+    @Transactional
+    public void changePassword(UserPasswordChangeDTO dto) {
+        Long userId = BaseContext.getCurrentId();
+        if (userId == null || userId <= 0) {
+            throw new BaseException("用户未登录");
+        }
+        User user = userMapper.getUserById(userId);
+        if (user == null) {
+            throw new BaseException("用户不存在");
+        }
+        verifyOldPassword(user, dto.getOldPassword());
+        user.setPassword(passwordEncoder.encode(dto.getNewPassword()));
+        userMapper.updateUser(user);
+    }
+
+    private void verifyOldPassword(User user, String rawPassword) {
+        if (rawPassword == null) {
+            throw new BaseException("请输入原密码");
+        }
+        String stored = user.getPassword();
+        if (stored == null) {
+            throw new BaseException("密码未设置");
+        }
+        if (stored.startsWith("$2a$") || stored.startsWith("$2b$") || stored.startsWith("$2y$")) {
+            if (!passwordEncoder.matches(rawPassword, stored)) {
+                throw new BaseException("原密码错误");
+            }
+        } else if (!stored.equals(rawPassword)) {
+            throw new BaseException("原密码错误");
+        }
     }
 }

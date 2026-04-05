@@ -44,6 +44,10 @@ public interface ArticleMapper {
      */
     List<Article> selectHotArticles();
 
+    List<Article> selectCollectedByUserId(@Param("userId") Long userId,
+                                          @Param("offset") int offset,
+                                          @Param("size") int size);
+
     long countPageForAdmin(@Param("keyword") String keyword);
 
     List<AdminArticleListVO> pageForAdmin(@Param("keyword") String keyword,

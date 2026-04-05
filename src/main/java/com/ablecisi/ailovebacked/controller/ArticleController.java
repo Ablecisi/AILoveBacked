@@ -2,6 +2,7 @@ package com.ablecisi.ailovebacked.controller;
 
 import com.ablecisi.ailovebacked.context.BaseContext;
 import com.ablecisi.ailovebacked.exception.BaseException;
+import com.ablecisi.ailovebacked.exception.ForbiddenException;
 import com.ablecisi.ailovebacked.pojo.dto.ArticleToggleDTO;
 import com.ablecisi.ailovebacked.pojo.vo.ArticleVO;
 import com.ablecisi.ailovebacked.result.Result;
@@ -132,6 +133,16 @@ public class ArticleController {
         }
         articleInteractionService.setArticleCollected(uid, body.getArticleId(), Boolean.TRUE.equals(body.getActive()));
         return Result.success();
+    }
+
+    @GetMapping("/collect/list")
+    public Result<List<ArticleVO>> listCollected(@RequestParam(defaultValue = "1") int page,
+                                                 @RequestParam(defaultValue = "50") int size) {
+        Long uid = BaseContext.getCurrentId();
+        if (uid == null) {
+            throw new ForbiddenException("未登录");
+        }
+        return Result.success(articleService.listCollectedArticles(uid, page, size));
     }
 
     /**

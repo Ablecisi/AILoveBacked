@@ -25,4 +25,6 @@ public interface PostAppService {
     void recordShare(Long postId);
 
     List<PostInteractionStateVO> interactionStates(Long userId, List<Long> postIds);
+
+    List<PostFeedVO> listMyPosts(Long userId, int page, int size);
 }

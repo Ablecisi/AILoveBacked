@@ -5,11 +5,13 @@ import com.ablecisi.ailovebacked.constant.StatusCodeConstant;
 import com.ablecisi.ailovebacked.context.BaseContext;
 import com.ablecisi.ailovebacked.pojo.dto.UserDTO;
 import com.ablecisi.ailovebacked.pojo.dto.UserFollowDTO;
+import com.ablecisi.ailovebacked.pojo.dto.UserPasswordChangeDTO;
 import com.ablecisi.ailovebacked.pojo.dto.UserProfileUpdateDTO;
 import com.ablecisi.ailovebacked.pojo.vo.UserVO;
 import com.ablecisi.ailovebacked.result.Result;
 import com.ablecisi.ailovebacked.service.UserActivityService;
 import com.ablecisi.ailovebacked.service.UserService;
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -141,6 +143,13 @@ public class UserController {
     public Result<UserVO> updateProfile(@RequestBody UserProfileUpdateDTO body) {
         log.info("更新用户资料");
         return Result.success("更新成功", userService.updateProfile(body));
+    }
+
+    @PutMapping("/password")
+    public Result<Void> changePassword(@RequestBody @Valid UserPasswordChangeDTO body) {
+        log.info("用户修改密码");
+        userService.changePassword(body);
+        return Result.success();
     }
 
     /**

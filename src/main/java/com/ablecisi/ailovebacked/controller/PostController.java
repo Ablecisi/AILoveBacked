@@ -81,4 +81,17 @@ public class PostController {
         }
         return Result.success(postAppService.interactionStates(uid, dto.getPostIds()));
     }
+
+    /**
+     * 当前用户发布的帖子，按发布时间倒序
+     */
+    @GetMapping("/mine")
+    public Result<List<PostFeedVO>> myPosts(@RequestParam(defaultValue = "1") int page,
+                                            @RequestParam(defaultValue = "30") int size) {
+        Long uid = BaseContext.getCurrentId();
+        if (uid == null) {
+            throw new ForbiddenException("未登录");
+        }
+        return Result.success(postAppService.listMyPosts(uid, page, size));
+    }
 }

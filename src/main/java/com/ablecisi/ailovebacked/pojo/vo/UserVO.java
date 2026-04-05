@@ -30,6 +30,10 @@ public class UserVO implements Serializable {
     private String avatarUrl; // 头像URL
     private Integer followingCount; // 关注人数
     private Integer followersCount; // 粉丝人数
+    /**
+     * 发帖数量（列表接口用，避免拉全量 postIds）
+     */
+    private Integer postCount;
     private List<Long> postIds; // 用户帖子ID列表
     private List<Long> characterIds; // 我的角色ID列表
     private Boolean isFollowed; // 是否已关注

@@ -134,6 +134,21 @@ public class ArticleServiceImpl implements ArticleService {
         articleMapper.incrementViewCount(articleId);
     }
 
+    @Override
+    public List<ArticleVO> listCollectedArticles(Long userId, int page, int size) {
+        if (userId == null) {
+            return List.of();
+        }
+        int p = Math.max(1, page);
+        int s = Math.min(100, Math.max(1, size));
+        int offset = (p - 1) * s;
+        List<Article> rows = articleMapper.selectCollectedByUserId(userId, offset, s);
+        if (rows == null || rows.isEmpty()) {
+            return List.of();
+        }
+        return rows.stream().map(this::convertToArticleVO).toList();
+    }
+
     /**
      * 转换 Article 实体为 ArticleVO
      *

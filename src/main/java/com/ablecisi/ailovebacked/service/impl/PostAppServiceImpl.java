@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 @Service
@@ -100,6 +101,25 @@ public class PostAppServiceImpl implements PostAppService {
             throw new BaseException("帖子不存在");
         }
         postMapper.incrementShareCount(postId);
+    }
+
+    @Override
+    public List<PostFeedVO> listMyPosts(Long userId, int page, int size) {
+        if (userId == null) {
+            return List.of();
+        }
+        int p = Math.max(1, page);
+        int s = Math.min(100, Math.max(1, size));
+        int offset = (p - 1) * s;
+        List<Post> rows = postMapper.selectPageByUserId(userId, offset, s);
+        if (rows == null || rows.isEmpty()) {
+            return Collections.emptyList();
+        }
+        List<PostFeedVO> out = new ArrayList<>();
+        for (Post row : rows) {
+            out.add(toFeedVo(row, userId));
+        }
+        return out;
     }
 
     @Override
