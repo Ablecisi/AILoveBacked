@@ -125,6 +125,15 @@ public class ArticleServiceImpl implements ArticleService {
                 .toList();
     }
 
+    @Override
+    public void recordArticleView(Long articleId) {
+        Article a = articleMapper.selectById(articleId);
+        if (a == null) {
+            return;
+        }
+        articleMapper.incrementViewCount(articleId);
+    }
+
     /**
      * 转换 Article 实体为 ArticleVO
      *
@@ -154,7 +163,7 @@ public class ArticleServiceImpl implements ArticleService {
                 .authorId(String.valueOf(article.getUserId()))
                 .authorName(authorName)
                 .authorAvatarUrl(authorAvatar)
-                .publishTime(article.getUpdateTime())
+                .publishTime(article.getCreateTime())
                 .viewCount(article.getViewCount())
                 .likeCount(article.getLikeCount())
                 .commentCount(article.getCommentCount())

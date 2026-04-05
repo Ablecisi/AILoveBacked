@@ -42,7 +42,8 @@ public class WebMvcConfiguration extends WebMvcConfigurationSupport {
                 .excludePathPatterns(
                         "/api/user/login",
                         "/api/app/bootstrap",
-                        "/api/post/feed");
+                        "/api/post/feed",
+                        "/api/article/view");
         log.info("注册管理端 JWT 拦截器: /admin/api/**");
         registry.addInterceptor(jwtTokenAdminInterceptor)
                 .addPathPatterns("/admin/api/**")

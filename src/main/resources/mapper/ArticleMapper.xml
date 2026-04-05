@@ -132,4 +132,11 @@
             update_time = NOW()
         WHERE id = #{id}
     </update>
+
+    <update id="incrementViewCount">
+        UPDATE article
+        SET view_count  = IFNULL(view_count, 0) + 1,
+            update_time = NOW()
+        WHERE id = #{id}
+    </update>
 </mapper>

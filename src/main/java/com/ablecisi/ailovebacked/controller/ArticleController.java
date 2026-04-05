@@ -93,6 +93,16 @@ public class ArticleController {
     }
 
     /**
+     * 记录文章阅读（浏览量 +1），无需登录
+     */
+    @PostMapping("/view")
+    public Result<Void> recordView(@RequestParam String articleId) {
+        Long id = parseId(articleId);
+        articleService.recordArticleView(id);
+        return Result.success();
+    }
+
+    /**
      * 切换点赞状态
      *
      * @param body 请求体

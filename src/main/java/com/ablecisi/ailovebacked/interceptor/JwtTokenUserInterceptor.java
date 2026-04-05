@@ -96,7 +96,8 @@ public class JwtTokenUserInterceptor implements HandlerInterceptor {
         String path = normalizedPathWithinContext(request);
         return "/api/user/login".equals(path)
                 || "/api/app/bootstrap".equals(path)
-                || "/api/post/feed".equals(path);
+                || "/api/post/feed".equals(path)
+                || "/api/article/view".equals(path);
     }
 
     /**

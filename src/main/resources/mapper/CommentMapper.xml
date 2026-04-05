@@ -29,6 +29,7 @@
         <result column="user_name" property="userName"/>
         <result column="avatar_url" property="avatarUrl"/>
         <result column="parent_id" property="parentId"/>
+        <result column="parent_user_name" property="parentUserName"/>
         <result column="root_id" property="rootId"/>
         <result column="depth" property="depth"/>
         <result column="like_count" property="likeCount"/>
@@ -95,13 +96,18 @@
         c.user_id,
         u.name AS user_name,
         u.avatar_url AS avatar_url,
-        c.parent_id, c.root_id, c.depth,
+        c.parent_id,
+        CASE WHEN c.parent_id IS NULL THEN NULL
+        ELSE NULLIF(TRIM(COALESCE(pu.name, pu.username, '')), '') END AS parent_user_name,
+        c.root_id, c.depth,
         c.like_count, c.reply_count,
         (c.is_deleted=1) AS deleted,
         c.create_time,
         c.path AS path_cursor      <!-- ★ 新增 -->
         FROM comment c
         LEFT JOIN user u ON u.id = c.user_id
+        LEFT JOIN comment parent_c ON parent_c.id = c.parent_id
+        LEFT JOIN user pu ON pu.id = parent_c.user_id
         WHERE c.article_id = #{articleId}
         AND c.parent_id IS NULL
         <choose>
@@ -130,13 +136,18 @@
         c.user_id,
         u.name AS user_name,
         u.avatar_url AS avatar_url,
-        c.parent_id, c.root_id, c.depth,
+        c.parent_id,
+        CASE WHEN c.parent_id IS NULL THEN NULL
+        ELSE NULLIF(TRIM(COALESCE(pu.name, pu.username, '')), '') END AS parent_user_name,
+        c.root_id, c.depth,
         c.like_count, c.reply_count,
         (c.is_deleted=1) AS deleted,
         c.create_time,
         c.path AS path_cursor      <!-- ★ 新增 -->
         FROM comment c
         LEFT JOIN user u ON u.id = c.user_id
+        LEFT JOIN comment parent_c ON parent_c.id = c.parent_id
+        LEFT JOIN user pu ON pu.id = parent_c.user_id
         WHERE c.post_id = #{postId}
         AND c.parent_id IS NULL
         <choose>
@@ -165,13 +176,18 @@
         c.user_id,
         u.name AS user_name,
         u.avatar_url AS avatar_url,
-        c.parent_id, c.root_id, c.depth,
+        c.parent_id,
+        CASE WHEN c.parent_id IS NULL THEN NULL
+        ELSE NULLIF(TRIM(COALESCE(pu.name, pu.username, '')), '') END AS parent_user_name,
+        c.root_id, c.depth,
         c.like_count, c.reply_count,
         (c.is_deleted=1) AS deleted,
         c.create_time,
         c.path AS path_cursor      <!-- ★ 新增 -->
         FROM comment c
         LEFT JOIN user u ON u.id = c.user_id
+        LEFT JOIN comment parent_c ON parent_c.id = c.parent_id
+        LEFT JOIN user pu ON pu.id = parent_c.user_id
         WHERE c.root_id = #{rootId} AND c.id != #{rootId}
         <if test="afterPath != null and afterPath != ''">
             AND c.path > #{afterPath}
@@ -188,13 +204,18 @@
         c.user_id,
         u.name AS user_name,
         u.avatar_url AS avatar_url,
-        c.parent_id, c.root_id, c.depth,
+        c.parent_id,
+        CASE WHEN c.parent_id IS NULL THEN NULL
+        ELSE NULLIF(TRIM(COALESCE(pu.name, pu.username, '')), '') END AS parent_user_name,
+        c.root_id, c.depth,
         c.like_count, c.reply_count,
         (c.is_deleted=1) AS deleted,
         c.create_time,
         c.path AS path_cursor      <!-- ★ 新增 -->
         FROM comment c
         LEFT JOIN user u ON u.id = c.user_id
+        LEFT JOIN comment parent_c ON parent_c.id = c.parent_id
+        LEFT JOIN user pu ON pu.id = parent_c.user_id
         WHERE c.parent_id = #{parentId}
         ORDER BY c.create_time ASC
         LIMIT #{size} OFFSET #{offset}
@@ -257,13 +278,18 @@
         c.user_id,
         u.name AS user_name,
         u.avatar_url AS avatar_url,
-        c.parent_id, c.root_id, c.depth,
+        c.parent_id,
+        CASE WHEN c.parent_id IS NULL THEN NULL
+        ELSE NULLIF(TRIM(COALESCE(pu.name, pu.username, '')), '') END AS parent_user_name,
+        c.root_id, c.depth,
         c.like_count, c.reply_count,
         (c.is_deleted=1) AS deleted,
         c.create_time,
         c.path AS path_cursor      <!-- ★ 新增 -->
         FROM comment c
         LEFT JOIN user u ON u.id = c.user_id
+        LEFT JOIN comment parent_c ON parent_c.id = c.parent_id
+        LEFT JOIN user pu ON pu.id = parent_c.user_id
         WHERE c.id = #{id}
     </select>
 
@@ -275,13 +301,18 @@
         c.user_id,
         u.name AS user_name,
         u.avatar_url AS avatar_url,
-        c.parent_id, c.root_id, c.depth,
+        c.parent_id,
+        CASE WHEN c.parent_id IS NULL THEN NULL
+        ELSE NULLIF(TRIM(COALESCE(pu.name, pu.username, '')), '') END AS parent_user_name,
+        c.root_id, c.depth,
         c.like_count, c.reply_count,
         (c.is_deleted=1) AS deleted,
         c.create_time,
         c.path AS path_cursor      <!-- ★ 新增 -->
         FROM comment c
         LEFT JOIN user u ON u.id = c.user_id
+        LEFT JOIN comment parent_c ON parent_c.id = c.parent_id
+        LEFT JOIN user pu ON pu.id = parent_c.user_id
         WHERE c.root_id IN
         <foreach collection="rootIds" item="rid" open="(" separator="," close=")">
             #{rid}

@@ -45,4 +45,9 @@ public interface ArticleService {
      * @return 推荐文章
      */
     ArticleVO getFeaturedArticle(List<String> tags);
+
+    /**
+     * 记录一次阅读（浏览量 +1）
+     */
+    void recordArticleView(Long articleId);
 }

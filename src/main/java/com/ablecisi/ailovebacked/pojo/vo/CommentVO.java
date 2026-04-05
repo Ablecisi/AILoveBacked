@@ -28,6 +28,10 @@ public class CommentVO implements Serializable {
     private String avatarUrl;   // 冗余: 前端直接显示头像
 
     private Long parentId;
+    /**
+     * 父评论作者昵称（用于「A→B」展示；回复根评论时为空）
+     */
+    private String parentUserName;
     private Long rootId;
     private Integer depth;
     private Integer likeCount;
