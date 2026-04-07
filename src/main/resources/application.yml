@@ -4,7 +4,7 @@ spring:
   application:
     name: AILoveBacked
   profiles:
-    active: dev # 激活的环境
+    active: prod # 激活的环境
   servlet:
     multipart:
       max-file-size: 5MB
