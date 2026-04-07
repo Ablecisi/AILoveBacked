@@ -1,0 +1,7 @@
+-- AI 服务配置（管理端「AI 服务配置」页写入 app_config，无需手工执行本脚本即可运行）
+-- 键名约定：
+--   llm.provider              模型名（请求体 model）
+--   llm.endpoint              OpenAI 兼容 Chat Completions URL
+--   llm.apiKey                API 密钥（C 端 bootstrap 不返回此项）
+--   llm.include-reasoning-content   true / false
+--   ml.bert.url               BERT 情绪识别 POST 接口；可为空

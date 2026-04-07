@@ -5,7 +5,6 @@ import com.ablecisi.ailovebacked.utils.HttpClientUtil;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.TypeReference;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.*;
@@ -22,31 +21,25 @@ import java.util.function.Consumer;
 @Slf4j
 public class LlmClient {
 
-    private final String apiKey;
-    private final String baseUrl;
-    private final String model;
-    /**
-     * 是否在 content 为空时回退到 reasoning_content
-     */
-    private final boolean includeReasoningContent;
+    private final AiRuntimeConfigService aiRuntimeConfigService;
 
     private final AtomicInteger tokensUsed = new AtomicInteger(0);
 
-    public LlmClient(
-            @Value("${llm.apiKey}") String apiKey,
-            @Value("${llm.endpoint}") String baseUrl,
-            @Value("${llm.provider}") String model,
-            @Value("${llm.include-reasoning-content:false}") boolean includeReasoningContent) {
-        this.apiKey = apiKey;
-        this.baseUrl = baseUrl;
-        this.model = model;
-        this.includeReasoningContent = includeReasoningContent;
+    public LlmClient(AiRuntimeConfigService aiRuntimeConfigService) {
+        this.aiRuntimeConfigService = aiRuntimeConfigService;
     }
 
     /**
      * 非流式生成：返回完整文本
      */
     public String generate(String prompt) {
+        String apiKey = aiRuntimeConfigService.getLlmApiKey();
+        String baseUrl = aiRuntimeConfigService.getLlmEndpoint();
+        String model = aiRuntimeConfigService.getLlmProvider();
+        if (apiKey.isBlank() || baseUrl.isBlank() || model.isBlank()) {
+            throw new BaseException("LLM 未配置完整：请在管理后台「AI 服务配置」或环境中配置 llm.apiKey、llm.endpoint、llm.provider");
+        }
+        boolean includeReasoningContent = aiRuntimeConfigService.isIncludeReasoningContent();
         Map<String, Object> body = Map.of(
                 "model", model,
                 "messages", List.of(
@@ -103,6 +96,13 @@ public class LlmClient {
      */
     public String generateStream(String prompt, Consumer<String> onDelta) throws IOException {
         long tRequest = System.currentTimeMillis();
+        String apiKey = aiRuntimeConfigService.getLlmApiKey();
+        String baseUrl = aiRuntimeConfigService.getLlmEndpoint();
+        String model = aiRuntimeConfigService.getLlmProvider();
+        if (apiKey.isBlank() || baseUrl.isBlank() || model.isBlank()) {
+            throw new IOException("LLM 未配置完整：请在管理后台「AI 服务配置」或环境中配置 llm.apiKey、llm.endpoint、llm.provider");
+        }
+        final boolean includeReasoningContent = aiRuntimeConfigService.isIncludeReasoningContent();
         Map<String, Object> streamBody = Map.of(
                 "model", model,
                 "messages", List.of(
@@ -138,7 +138,7 @@ public class LlmClient {
                 if (line.isEmpty()) {
                     continue;
                 }
-                String piece = parseDelta(line);
+                String piece = parseDelta(line, includeReasoningContent);
                 if (!piece.isEmpty()) {
                     long now = System.currentTimeMillis();
                     if (tLastDelta[0] == 0L) {
@@ -200,7 +200,7 @@ public class LlmClient {
     }
 
     @SuppressWarnings("unchecked")
-    private String parseDelta(String line) {
+    private String parseDelta(String line, boolean includeReasoningContent) {
         try {
             String s = line.startsWith("data:") ? line.substring(5).trim() : line;
             if (s.equals("[DONE]")) {

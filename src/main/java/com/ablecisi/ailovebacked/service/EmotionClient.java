@@ -2,7 +2,7 @@ package com.ablecisi.ailovebacked.service;
 
 import com.ablecisi.ailovebacked.utils.HttpClientUtil;
 import lombok.Data;
-import org.springframework.beans.factory.annotation.Value;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
@@ -11,9 +11,10 @@ import java.util.Map;
  * EmotionClient：通过 {@link HttpClientUtil} 调用情绪识别 HTTP 服务。
  */
 @Service
+@RequiredArgsConstructor
 public class EmotionClient {
-    @Value("${ml.bert.url}")
-    private String bertUrl;
+
+    private final AiRuntimeConfigService aiRuntimeConfigService;
 
     @Data
     public static class EmotionDTO {
@@ -29,6 +30,10 @@ public class EmotionClient {
      */
     public EmotionDTO detect(String text) {
         try {
+            String bertUrl = aiRuntimeConfigService.getBertUrl();
+            if (bertUrl == null || bertUrl.isBlank()) {
+                return fallback();
+            }
             Map<String, String> req = Map.of("text", text);
             HttpClientUtil.HttpResult r = HttpClientUtil.postJson(bertUrl, req, Map.of());
             if (!r.is2xx() || r.body() == null || r.body().isBlank()) {

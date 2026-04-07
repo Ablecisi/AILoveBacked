@@ -89,7 +89,8 @@ public class DialogController {
                     .data(Map.of("requestId", requestId, "serverTime", System.currentTimeMillis()), MediaType.APPLICATION_JSON));
         } catch (IOException e) {
             log.warn("stream ack send failed requestId={}", requestId, e);
-            emitter.completeWithError(e);
+            stopHeartbeat.run();
+            emitter.complete();
             return emitter;
         }
         heartbeat.scheduleAtFixedRate(() -> {
@@ -126,11 +127,15 @@ public class DialogController {
                 log.warn("流式对话失败 requestId={}", requestId, e);
                 try {
                     String msg = e.getMessage() == null ? "流式对话失败" : e.getMessage();
+                    if (msg.startsWith("HTTP 429")) {
+                        msg = "AI服务当前繁忙(429)，请稍后重试";
+                    }
                     emitter.send(SseEmitter.event().name("error").data(msg, MediaType.APPLICATION_JSON));
                 } catch (IOException ignored) {
                 }
                 stopHeartbeat.run();
-                emitter.completeWithError(e);
+                // SSE 场景只发送 error 事件并正常结束，避免再次进入全局异常处理导致 converter 报错
+                emitter.complete();
             }
         });
         return emitter;

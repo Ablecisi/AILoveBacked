@@ -118,7 +118,7 @@ public final class HttpClientUtil {
 
     /**
      * POST JSON，返回响应体字节流（适用于 SSE/分块读取）。调用方必须在结束后关闭流。
-     * 非 2xx 时会读完错误正文后抛出 {@link UncheckedIOException}。
+     * 非 2xx 时会读完错误正文并抛出带状态码/摘要信息的 {@link UncheckedIOException}。
      */
     public static InputStream postJsonStream(String url, Object body, Map<String, String> headers) {
         Objects.requireNonNull(url, "url");
@@ -138,12 +138,18 @@ public final class HttpClientUtil {
             if (resp.statusCode() >= 200 && resp.statusCode() < 300) {
                 return resp.body();
             }
+            String errText = "";
             try (InputStream err = resp.body()) {
                 if (err != null) {
-                    err.readAllBytes();
+                    errText = new String(err.readAllBytes(), StandardCharsets.UTF_8);
                 }
             }
-            throw new UncheckedIOException(new IOException("HTTP " + resp.statusCode()));
+            String brief = errText == null ? "" : errText.strip();
+            if (brief.length() > 400) {
+                brief = brief.substring(0, 400) + "...";
+            }
+            throw new UncheckedIOException(new IOException("HTTP " + resp.statusCode()
+                    + (brief.isEmpty() ? "" : " " + brief)));
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new HttpClientException("请求被中断: " + url, e);
