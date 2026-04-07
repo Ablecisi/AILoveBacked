@@ -4,6 +4,7 @@ import com.ablecisi.ailovebacked.exception.BaseException;
 import com.ablecisi.ailovebacked.utils.HttpClientUtil;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.TypeReference;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -18,6 +19,7 @@ import java.util.function.Consumer;
  * LlmClient：通过 {@link HttpClientUtil} 调用大模型 HTTP 接口（非流式 / 流式 SSE）。
  */
 @Service
+@Slf4j
 public class LlmClient {
 
     private final String apiKey;
@@ -100,6 +102,7 @@ public class LlmClient {
      * 流式生成：逐段回调片段；返回最终拼接文本
      */
     public String generateStream(String prompt, Consumer<String> onDelta) throws IOException {
+        long tRequest = System.currentTimeMillis();
         Map<String, Object> streamBody = Map.of(
                 "model", model,
                 "messages", List.of(
@@ -124,6 +127,9 @@ public class LlmClient {
         }
 
         StringBuilder sb = new StringBuilder();
+        long tConnected = System.currentTimeMillis();
+        log.info("llm stream connected in {}ms", (tConnected - tRequest));
+        final long[] tLastDelta = {0L};
         try (in;
              BufferedReader rd = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8))) {
             String line;
@@ -134,6 +140,13 @@ public class LlmClient {
                 }
                 String piece = parseDelta(line);
                 if (!piece.isEmpty()) {
+                    long now = System.currentTimeMillis();
+                    if (tLastDelta[0] == 0L) {
+                        log.info("llm first delta in {}ms", (now - tRequest));
+                    } else {
+                        log.debug("llm delta interval={}ms chars={}", (now - tLastDelta[0]), piece.length());
+                    }
+                    tLastDelta[0] = now;
                     sb.append(piece);
                     if (onDelta != null) {
                         onDelta.accept(piece);

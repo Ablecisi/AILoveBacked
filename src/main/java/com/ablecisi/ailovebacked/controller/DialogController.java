@@ -17,7 +17,12 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 /**
  * DialogController
@@ -65,25 +70,66 @@ public class DialogController {
     public SseEmitter sendStream(@RequestBody @Valid ChatSendDTO dto) {
         log.info("用户 {} 流式发送消息到会话 {}: {}", BaseContext.getCurrentId(), dto.getConversationId(), dto.getText());
         dto.setUserId(BaseContext.getCurrentId());
+        String requestId = UUID.randomUUID().toString();
         SseEmitter emitter = new SseEmitter(0L);
+        ScheduledExecutorService heartbeat = Executors.newSingleThreadScheduledExecutor();
+        Runnable stopHeartbeat = () -> {
+            heartbeat.shutdownNow();
+            try {
+                heartbeat.awaitTermination(200, TimeUnit.MILLISECONDS);
+            } catch (InterruptedException ignored) {
+                Thread.currentThread().interrupt();
+            }
+        };
+        emitter.onCompletion(stopHeartbeat);
+        emitter.onTimeout(stopHeartbeat);
+        emitter.onError(err -> stopHeartbeat.run());
+        try {
+            emitter.send(SseEmitter.event().name("ack")
+                    .data(Map.of("requestId", requestId, "serverTime", System.currentTimeMillis()), MediaType.APPLICATION_JSON));
+        } catch (IOException e) {
+            log.warn("stream ack send failed requestId={}", requestId, e);
+            emitter.completeWithError(e);
+            return emitter;
+        }
+        heartbeat.scheduleAtFixedRate(() -> {
+            try {
+                emitter.send(SseEmitter.event().name("heartbeat")
+                        .data(Map.of("requestId", requestId, "ts", System.currentTimeMillis()), MediaType.APPLICATION_JSON));
+            } catch (IOException ignored) {
+                stopHeartbeat.run();
+            }
+        }, 12, 12, TimeUnit.SECONDS);
         dialogSseExecutor.execute(() -> {
             try {
-                ChatReplyVO vo = dialogService.handleUserMessageStream(dto, piece -> {
+                emitter.send(SseEmitter.event().name("start")
+                        .data(Map.of("requestId", requestId), MediaType.APPLICATION_JSON));
+                ChatReplyVO vo = dialogService.handleUserMessageStream(dto, () -> {
+                    try {
+                        emitter.send(SseEmitter.event().name("preprocess_done")
+                                .data(Map.of("requestId", requestId, "ts", System.currentTimeMillis()), MediaType.APPLICATION_JSON));
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                }, piece -> {
                     try {
                         // APPLICATION_JSON：data 行为合法 JSON，避免正文换行破坏 SSE，移动端可用 JSON 解析为 String
                         emitter.send(SseEmitter.event().name("chunk").data(piece, MediaType.APPLICATION_JSON));
-                    } catch (IOException ignored) {
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
                     }
                 });
                 emitter.send(SseEmitter.event().name("done").data(vo, MediaType.APPLICATION_JSON));
+                stopHeartbeat.run();
                 emitter.complete();
             } catch (Exception e) {
-                log.warn("流式对话失败", e);
+                log.warn("流式对话失败 requestId={}", requestId, e);
                 try {
                     String msg = e.getMessage() == null ? "流式对话失败" : e.getMessage();
                     emitter.send(SseEmitter.event().name("error").data(msg, MediaType.APPLICATION_JSON));
                 } catch (IOException ignored) {
                 }
+                stopHeartbeat.run();
                 emitter.completeWithError(e);
             }
         });

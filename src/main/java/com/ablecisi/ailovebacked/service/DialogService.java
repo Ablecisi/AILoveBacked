@@ -117,7 +117,10 @@ public class DialogService {
      * 流式版本：Consumer<String> onDelta 里推给前端（SSE / WebSocket 均可）
      */
     @Transactional
-    public ChatReplyVO handleUserMessageStream(ChatSendDTO dto, Consumer<String> onDelta) throws IOException {
+    public ChatReplyVO handleUserMessageStream(ChatSendDTO dto,
+                                               Runnable onPreprocessDone,
+                                               Consumer<String> onDelta) throws IOException {
+        long tStart = System.currentTimeMillis();
         userApiRateLimiter.assertChatSendAllowed(dto.getUserId());
         Conversation conv = requireOwnedConversation(dto.getConversationId(), dto.getUserId());
         assertCharacterMatches(conv, dto.getCharacterId());
@@ -129,8 +132,22 @@ public class DialogService {
         String profileBrief = profileService.updateAndSummarize(dto.getUserId(), emo.getEmotion());
         String lastDialogue = messageService.briefContext(dto.getConversationId(), 8);
         String prompt = promptService.renderWithCharacter(dto.getCharacterId(), emo, profileBrief, lastDialogue, dto.getText(), dto.getUserId(), sessionScene);
+        long tPreDone = System.currentTimeMillis();
+        if (onPreprocessDone != null) {
+            onPreprocessDone.run();
+        }
 
-        String reply = llmClient.generateStream(prompt, onDelta);
+        final boolean[] firstDeltaSeen = {false};
+        String reply = llmClient.generateStream(prompt, piece -> {
+            if (!firstDeltaSeen[0]) {
+                firstDeltaSeen[0] = true;
+                log.info("stream stage first-delta userId={} convId={} preprocessMs={}",
+                        dto.getUserId(), dto.getConversationId(), (tPreDone - tStart));
+            }
+            if (onDelta != null) {
+                onDelta.accept(piece);
+            }
+        });
 
         Message am = messageService.saveAiMessage(dto.getConversationId(), dto.getUserId(), reply);
         String brief = reply.length() > 180 ? reply.substring(0, 180) : reply;
